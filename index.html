@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Task Curator</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <meta name="color-scheme" content="light dark" />
+        <style>
+            /* Optional: nicer scrollbars */
+            * {
+                scrollbar-width: thin;
+                scrollbar-color: rgb(203 213 225) transparent;
+            }
+
+            *::-webkit-scrollbar {
+                height: 8px;
+                width: 8px;
+            }
+
+            *::-webkit-scrollbar-thumb {
+                background: rgba(148, 163, 184, .6);
+                border-radius: 999px;
+            }
+
+            .drag-ghost {
+                opacity: .4;
+            }
+
+            .drag-over {
+                outline: 2px dashed rgba(59, 130, 246, .5);
+                outline-offset: 4px;
+            }
+        </style>
+    </head>
+
+    <body class="bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+        <div class="min-h-dvh max-w-6xl mx-auto p-4 md:p-6">
+            <!-- Header -->
+            <header class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="size-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 shadow-lg"></div>
+                    <div>
+                        <h1 class="text-2xl font-extrabold tracking-tight">Task Curator</h1>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Lightweight, local-first task manager.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="exportBtn"
+                        class="px-3 py-2 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-sm font-medium shadow-sm">Export</button>
+                    <label
+                        class="px-3 py-2 rounded-xl bg-slate-200/70 dark:bg-slate-800 text-sm font-medium cursor-pointer">
+                        Import <input id="importInput" type="file" accept="application/json" class="hidden" />
+                    </label>
+                    <button id="clearAll"
+                        class="px-3 py-2 rounded-xl bg-rose-600 text-white text-sm font-medium shadow-sm">Clear
+                        All</button>
+                </div>
+            </header>
+
+            <!-- Quick Stats & Search -->
+            <section class="mt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="col-span-2 flex flex-col md:flex-row gap-3">
+                    <div class="flex-1 grid grid-cols-3 gap-3">
+                        <div class="rounded-2xl p-4 bg-white/70 dark:bg-slate-800 shadow-sm">
+                            <p class="text-xs text-slate-500">Active</p>
+                            <p id="statActive" class="text-2xl font-bold">0</p>
+                        </div>
+                        <div class="rounded-2xl p-4 bg-white/70 dark:bg-slate-800 shadow-sm">
+                            <p class="text-xs text-slate-500">Overdue</p>
+                            <p id="statOverdue" class="text-2xl font-bold">0</p>
+                        </div>
+                        <div class="rounded-2xl p-4 bg-white/70 dark:bg-slate-800 shadow-sm">
+                            <p class="text-xs text-slate-500">Completed</p>
+                            <p id="statDone" class="text-2xl font-bold">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-span-1">
+                    <div class="relative">
+                        <input id="search" type="search" placeholder="Search (press k)"
+                            class="w-full px-4 py-3 pr-10 rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+                        <svg class="absolute right-3 top-1/2 -translate-y-1/2 size-5 opacity-60" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.3-4.3" />
+                        </svg>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Add Task Card -->
+            <section class="mt-6 rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm p-4 md:p-5">
+                <form id="taskForm" class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                    <div class="md:col-span-2">
+                        <label class="text-xs text-slate-500">Title</label>
+                        <input id="title" required placeholder="e.g. Ship MVP, write blog, book tickets…"
+                            class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" />
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">Due</label>
+                        <input id="due" type="date"
+                            class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" />
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">Priority</label>
+                        <select id="priority"
+                            class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="P3">P3 · Low</option>
+                            <option value="P2">P2 · Medium</option>
+                            <option value="P1">P1 · High</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">Tags (comma)</label>
+                        <input id="tags" placeholder="work, ui, quick"
+                            class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" />
+                    </div>
+                    <div class="md:col-span-5">
+                        <label class="text-xs text-slate-500">Notes</label>
+                        <textarea id="notes" rows="2" placeholder="Optional details…"
+                            class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
+                    <div class="md:col-span-5 flex items-center justify-end gap-2">
+                        <button type="reset" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700">Reset</button>
+                        <button class="px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold shadow">Add
+                            Task</button>
+                    </div>
+                </form>
+                <p class="mt-2 text-xs text-slate-500">Tips: press <kbd
+                        class="px-1 rounded bg-slate-200 dark:bg-slate-700">n</kbd> to focus title, <kbd
+                        class="px-1 rounded bg-slate-200 dark:bg-slate-700">k</kbd> to search.</p>
+            </section>
+
+            <!-- Filters -->
+            <section class="mt-4 flex flex-wrap gap-2 items-center">
+                <div class="flex items-center gap-2 bg-white/70 dark:bg-slate-800 rounded-2xl p-2 shadow-sm">
+                    <button data-filter="status:all" class="chip active">All</button>
+                    <button data-filter="status:open" class="chip">Open</button>
+                    <button data-filter="status:done" class="chip">Done</button>
+                </div>
+                <div class="flex items-center gap-2 bg-white/70 dark:bg-slate-800 rounded-2xl p-2 shadow-sm">
+                    <button data-filter="sort:created" class="chip active">Newest</button>
+                    <button data-filter="sort:due" class="chip">Due</button>
+                    <button data-filter="sort:priority" class="chip">Priority</button>
+                    <button data-filter="sort:title" class="chip">Title</button>
+                </div>
+                <div id="tagBar" class="flex flex-wrap items-center gap-2"></div>
+                <style>
+                    .chip {
+                        padding: .4rem .7rem;
+                        border-radius: 999px;
+                        font-size: .8rem;
+                        background: transparent;
+                    }
+
+                    .chip.active {
+                        background: rgba(99, 102, 241, .15);
+                    }
+                </style>
+            </section>
+
+            <!-- Task List -->
+            <section class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm p-3">
+                    <div class="flex items-center justify-between px-1">
+                        <h2 class="text-sm font-semibold">Open Tasks</h2>
+                        <button id="completeSelected"
+                            class="text-xs px-2 py-1 rounded-lg bg-emerald-600 text-white">Complete Selected</button>
+                    </div>
+                    <ul id="openList" class="mt-2 space-y-2 min-h-20"></ul>
+                </div>
+                <div class="rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm p-3">
+                    <div class="flex items-center justify-between px-1">
+                        <h2 class="text-sm font-semibold">Completed <span id="collapseDoneTip"
+                                class="text-xs text-slate-500"></span></h2>
+                        <div class="flex items-center gap-2">
+                            <button id="toggleDone"
+                                class="text-xs px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700">Hide</button>
+                            <button id="deleteDone" class="text-xs px-2 py-1 rounded-lg bg-rose-600 text-white">Delete
+                                Done</button>
+                        </div>
+                    </div>
+                    <ul id="doneList" class="mt-2 space-y-2 min-h-20"></ul>
+                </div>
+            </section>
+
+            <footer class="mt-8 text-center text-xs text-slate-500">Local-first · Drag to reorder · Click tag chips to
+                filter</footer>
+        </div>
+
+        <!-- Toast -->
+        <div id="toast"
+            class="fixed bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl bg-slate-900 text-white text-sm shadow-lg opacity-0 pointer-events-none transition">
+        </div>
+
+        <script>
+            const $ = (sel, el = document) => el.querySelector(sel);
+            const $$ = (sel, el = document) => Array.from(el.querySelectorAll(sel));
+            const storeKey = 'taskCurator_v1';
+
+            let state = {
+                tasks: [],
+                filter: { status: 'all', sort: 'created', tag: null, q: '' },
+                ui: { showDone: true }
+            };
+
+            // Helpers
+            const uid = () => Math.random().toString(36).slice(2, 9);
+            const todayISO = () => new Date().toISOString().slice(0, 10);
+            const parseTags = (t) => (t || '').split(',').map(s => s.trim()).filter(Boolean);
+            const fmtDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString() : '—';
+            const comparePriority = (a, b) => ({ 'P1': 1, 'P2': 2, 'P3': 3 }[a] - { 'P1': 1, 'P2': 2, 'P3': 3 }[b]);
+            const toast = (msg) => { const el = $('#toast'); el.textContent = msg; el.classList.remove('opacity-0'); el.classList.add('opacity-100'); setTimeout(() => { el.classList.add('opacity-0'); el.classList.remove('opacity-100'); }, 1400); };
+
+            // Persistence
+            function save() { localStorage.setItem(storeKey, JSON.stringify(state)); }
+            function load() { const raw = localStorage.getItem(storeKey); if (!raw) return; try { const s = JSON.parse(raw); if (s.tasks) state.tasks = s.tasks; if (s.filter) state.filter = s.filter; if (s.ui) state.ui = s.ui; } catch (e) { } }
+
+            // Rendering
+            function render() {
+                const q = state.filter.q.toLowerCase();
+                const { status, tag } = state.filter;
+                const open = state.tasks.filter(t => !t.done);
+                const done = state.tasks.filter(t => t.done);
+
+                // Stats
+                const overdue = open.filter(t => t.due && t.due < todayISO());
+                $('#statActive').textContent = open.length;
+                $('#statOverdue').textContent = overdue.length;
+                $('#statDone').textContent = done.length;
+
+                // Tag bar
+                const tagCounts = {};
+                state.tasks.flatMap(t => t.tags).forEach(tag => tagCounts[tag] = (tagCounts[tag] || 0) + 1);
+                const tagBar = $('#tagBar');
+                tagBar.innerHTML = Object.entries(tagCounts).map(([tg, c]) => `
+        <button data-filter="tag:${tg}" class="chip ${state.filter.tag === tg ? 'active' : ''}">#${tg} <span class="opacity-60">(${c})</span></button>
+      `).join('');
+
+                // Sort
+                const sorters = {
+                    created: (a, b) => b.createdAt - a.createdAt,
+                    due: (a, b) => (a.due || '~~~~') > (b.due || '~~~~') ? 1 : -1,
+                    priority: (a, b) => comparePriority(a.priority, b.priority),
+                    title: (a, b) => a.title.localeCompare(b.title),
+                    order: (a, b) => (a.order || 0) - (b.order || 0),
+                };
+
+                function applyFilters(list) {
+                    return list
+                        .filter(t => status === 'all' || (status === 'open' && !t.done) || (status === 'done' && t.done))
+                        .filter(t => !tag || t.tags.includes(tag))
+                        .filter(t => !q || [t.title, t.notes, t.tags.join(' ')].join(' ').toLowerCase().includes(q))
+                        .sort(sorters[state.filter.sort] || sorters.created);
+                }
+
+                const openList = $('#openList');
+                const doneList = $('#doneList');
+
+                openList.innerHTML = applyFilters(open).map(renderItem).join('');
+                doneList.innerHTML = state.ui.showDone ? applyFilters(done).map(renderItem).join('') : '';
+
+                $('#toggleDone').textContent = state.ui.showDone ? 'Hide' : 'Show';
+                $('#collapseDoneTip').textContent = state.ui.showDone ? '' : '(hidden)';
+
+                // Wire item events
+                $$('#openList li, #doneList li').forEach(wireItem);
+
+                // Chips
+                $$('#tagBar .chip, section .chip').forEach(btn => {
+                    btn.onclick = () => {
+                        const [k, v] = btn.dataset.filter.split(':');
+                        if (k === 'tag') state.filter.tag = state.filter.tag === v ? null : v;
+                        if (k === 'status') state.filter.status = v;
+                        if (k === 'sort') state.filter.sort = v;
+                        $$('#tagBar .chip, section .chip').forEach(c => c.classList.remove('active'));
+                        // Reapply active states
+                        $$('button[data-filter="status:' + state.filter.status + '"], button[data-filter="sort:' + state.filter.sort + '"]').forEach(c => c.classList.add('active'));
+                        if (state.filter.tag) $$('button[data-filter="tag:' + state.filter.tag + '"]').forEach(c => c.classList.add('active'));
+                        save(); render();
+                    }
+                });
+
+                // Bulk complete visibility
+                $('#completeSelected').style.display = $$('#openList input[type="checkbox"]').length ? 'inline-flex' : 'none';
+            }
+
+            function renderItem(t) {
+                const dueBadge = t.due ? `<span class="px-2 py-0.5 rounded-lg text-xs ${(!t.done && t.due < todayISO()) ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200' : 'bg-slate-200 dark:bg-slate-700'}">${fmtDate(t.due)}</span>` : '';
+                const prBadge = `<span class="px-2 py-0.5 rounded-lg text-xs ${t.priority === 'P1' ? 'bg-rose-200 dark:bg-rose-900/40' : 't.priority===\'P2\'' ? 'bg-amber-200 dark:bg-amber-900/40' : 'bg-emerald-200 dark:bg-emerald-900/40'}">${t.priority}</span>`;
+                const tags = t.tags.map(tag => `<button data-action="filter-tag" data-tag="${tag}" class="text-xs px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-700">#${tag}</button>`).join(' ');
+                return `
+        <li data-id="${t.id}" draggable="true" class="group rounded-xl p-3 bg-slate-100 dark:bg-slate-700/60 hover:bg-slate-100/80 transition">
+          <div class="flex items-start gap-3">
+            <input type="checkbox" ${t.done ? 'checked' : ''} class="mt-1 size-4" data-action="toggle" />
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <h3 class="font-semibold truncate">${escapeHTML(t.title)}</h3>
+                ${dueBadge}
+                ${prBadge}
+              </div>
+              ${t.notes ? `<p class="text-sm text-slate-600 dark:text-slate-300 mt-1 whitespace-pre-wrap">${escapeHTML(t.notes)}</p>` : ''}
+              <div class="mt-2 flex flex-wrap gap-2">${tags}</div>
+              <div class="mt-2 text-xs opacity-60">Added ${new Date(t.createdAt).toLocaleString()}</div>
+            </div>
+            <div class="flex flex-col gap-2 items-end">
+              <button data-action="edit" class="text-xs px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-600">Edit</button>
+              <button data-action="delete" class="text-xs px-2 py-1 rounded-lg bg-rose-600 text-white">Delete</button>
+              <button data-action="duplicate" class="text-xs px-2 py-1 rounded-lg bg-indigo-600 text-white">Duplicate</button>
+              <div class="opacity-40 group-hover:opacity-100 select-none cursor-grab" title="Drag to reorder">⠿</div>
+            </div>
+          </div>
+        </li>`;
+            }
+
+            function wireItem(li) {
+                const id = li.dataset.id;
+                li.addEventListener('click', (e) => {
+                    const act = e.target.dataset.action;
+                    if (act === 'toggle') { toggleDone(id, e.target.checked); }
+                    if (act === 'delete') { delTask(id); }
+                    if (act === 'duplicate') { duplicateTask(id); }
+                    if (act === 'edit') { openEditor(id); }
+                    if (act === 'filter-tag') { state.filter.tag = e.target.dataset.tag; render(); save(); }
+                });
+
+                // Drag & drop reordering (open list only)
+                li.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', id);
+                    li.classList.add('drag-ghost');
+                });
+                li.addEventListener('dragend', () => li.classList.remove('drag-ghost'));
+                li.addEventListener('dragover', (e) => { e.preventDefault(); li.classList.add('drag-over'); });
+                li.addEventListener('dragleave', () => li.classList.remove('drag-over'));
+                li.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    li.classList.remove('drag-over');
+                    const draggedId = e.dataTransfer.getData('text/plain');
+                    if (!draggedId || draggedId === id) return;
+                    reorder(draggedId, id);
+                });
+            }
+
+            function reorder(dragId, dropId) {
+                const list = state.tasks.filter(t => !t.done).sort((a, b) => (a.order || 0) - (b.order || 0));
+                const dragIndex = list.findIndex(t => t.id === dragId);
+                const dropIndex = list.findIndex(t => t.id === dropId);
+                if (dragIndex < 0 || dropIndex < 0) return;
+                const [moved] = list.splice(dragIndex, 1);
+                list.splice(dropIndex, 0, moved);
+                // Reassign incremental order values for open tasks
+                list.forEach((t, i) => { const ref = state.tasks.find(x => x.id === t.id); ref.order = i; });
+                save(); render();
+            }
+
+            // CRUD
+            function addTask({ title, notes, due, priority, tags }) {
+                const order = (state.tasks.filter(t => !t.done).reduce((m, t) => Math.max(m, t.order || 0), -1) + 1);
+                state.tasks.push({ id: uid(), title, notes, due: due || '', priority, tags, createdAt: Date.now(), done: false, order });
+                save(); render(); toast('Task added');
+            }
+            function delTask(id) { state.tasks = state.tasks.filter(t => t.id !== id); save(); render(); toast('Deleted'); }
+            function duplicateTask(id) { const t = state.tasks.find(x => x.id === id); if (!t) return; const copy = { ...t, id: uid(), createdAt: Date.now(), done: false }; state.tasks.push(copy); save(); render(); toast('Duplicated'); }
+            function toggleDone(id, val) {
+                const t = state.tasks.find(x => x.id === id); if (!t) return; t.done = val; if (!val) { // back to open -> give it max order
+                    t.order = (state.tasks.filter(x => !x.done).reduce((m, x) => Math.max(m, x.order || 0), -1) + 1);
+                }
+                save(); render();
+            }
+
+            // Edit dialog (very lightweight inline)
+            function openEditor(id) {
+                const t = state.tasks.find(x => x.id === id); if (!t) return;
+                const title = prompt('Title', t.title); if (title === null) return;
+                const notes = prompt('Notes', t.notes || ''); if (notes === null) return;
+                const due = prompt('Due YYYY-MM-DD', t.due || ''); if (due === null) return;
+                const priority = prompt('Priority P1/P2/P3', t.priority); if (priority === null) return;
+                const tags = prompt('Tags comma', t.tags.join(', ')); if (tags === null) return;
+                Object.assign(t, { title, notes, due, priority, tags: parseTags(tags) }); save(); render(); toast('Updated');
+            }
+
+            // Bulk
+            function completeSelected() {
+                $$('#openList input[type="checkbox"]').forEach(cb => { if (cb.checked) { const id = cb.closest('li').dataset.id; toggleDone(id, true); } });
+            }
+
+            // Utilities
+            function escapeHTML(s) { return (s || '').replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c])); }
+
+            // Form
+            $('#taskForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const title = $('#title').value.trim(); if (!title) return;
+                addTask({
+                    title,
+                    notes: $('#notes').value.trim(),
+                    due: $('#due').value,
+                    priority: $('#priority').value,
+                    tags: parseTags($('#tags').value)
+                });
+                e.target.reset(); $('#title').focus();
+            });
+
+            // Filters & search
+            $('#search').addEventListener('input', (e) => { state.filter.q = e.target.value.trim(); render(); save(); });
+            $('#toggleDone').addEventListener('click', () => { state.ui.showDone = !state.ui.showDone; save(); render(); });
+            $('#deleteDone').addEventListener('click', () => { if (confirm('Delete all completed tasks?')) { state.tasks = state.tasks.filter(t => !t.done); save(); render(); } });
+            $('#completeSelected').addEventListener('click', completeSelected);
+
+            // Import/Export/Clear
+            $('#exportBtn').addEventListener('click', () => {
+                const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob); a.download = 'task-curator-export.json'; a.click(); URL.revokeObjectURL(a.href);
+            });
+
+            $('#importInput').addEventListener('change', (e) => {
+                const file = e.target.files[0]; if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => { try { const data = JSON.parse(reader.result); if (Array.isArray(data.tasks)) state.tasks = data.tasks; if (data.filter) state.filter = data.filter; if (data.ui) state.ui = data.ui; save(); render(); toast('Imported'); } catch (err) { alert('Invalid JSON'); } };
+                reader.readAsText(file);
+                e.target.value = '';
+            });
+
+            $('#clearAll').addEventListener('click', () => { if (confirm('This will clear ALL tasks. Continue?')) { state = { tasks: [], filter: { status: 'all', sort: 'created', tag: null, q: '' }, ui: { showDone: true } }; save(); render(); } });
+
+            // Shortcuts
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'k' && document.activeElement !== $('#search')) { e.preventDefault(); $('#search').focus(); }
+                if (e.key.toLowerCase() === 'n' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) { $('#title').focus(); }
+            });
+
+            // Init
+            load();
+            // Default example on first run
+            if (!state.tasks.length) {
+                addTask({ title: 'Welcome to Task Curator', notes: 'Add, filter, drag to reorder. Everything stays in your browser.', due: todayISO(), priority: 'P2', tags: ['welcome', 'demo'] });
+                addTask({ title: 'Try editing me', notes: 'Click Edit → update fields.', due: '', priority: 'P3', tags: ['tips'] });
+                addTask({ title: 'Mark some done', notes: 'Use the checkbox or Complete Selected.', due: '', priority: 'P1', tags: ['tips'] });
+            } else { render(); }
+
+        </script>
+    </body>
+
+</html>
