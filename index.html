@@ -4,11 +4,10 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Task Curator</title>
+        <title>Task Curator — Advanced</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <meta name="color-scheme" content="light dark" />
         <style>
-            /* Optional: nicer scrollbars */
             * {
                 scrollbar-width: thin;
                 scrollbar-color: rgb(203 213 225) transparent;
@@ -32,67 +31,75 @@
                 outline: 2px dashed rgba(59, 130, 246, .5);
                 outline-offset: 4px;
             }
+
+            dialog::backdrop {
+                background: rgba(0, 0, 0, .35);
+            }
         </style>
     </head>
 
     <body class="bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
-        <div class="min-h-dvh max-w-6xl mx-auto p-4 md:p-6">
+        <div class="min-h-dvh max-w-7xl mx-auto p-4 md:p-6">
             <!-- Header -->
             <header class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div class="flex items-center gap-3">
                     <div class="size-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 shadow-lg"></div>
                     <div>
-                        <h1 class="text-2xl font-extrabold tracking-tight">Task Curator</h1>
+                        <h1 class="text-2xl font-extrabold tracking-tight">Task Curator <span
+                                class="text-xs font-normal opacity-70">Pro</span></h1>
                         <p class="text-sm text-slate-500 dark:text-slate-400">Lightweight, local-first task manager.</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                     <button id="exportBtn"
                         class="px-3 py-2 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-sm font-medium shadow-sm">Export</button>
                     <label
-                        class="px-3 py-2 rounded-xl bg-slate-200/70 dark:bg-slate-800 text-sm font-medium cursor-pointer">
-                        Import <input id="importInput" type="file" accept="application/json" class="hidden" />
-                    </label>
+                        class="px-3 py-2 rounded-xl bg-slate-200/70 dark:bg-slate-800 text-sm font-medium cursor-pointer">Import
+                        <input id="importInput" type="file" accept="application/json" class="hidden" /></label>
                     <button id="clearAll"
                         class="px-3 py-2 rounded-xl bg-rose-600 text-white text-sm font-medium shadow-sm">Clear
                         All</button>
                 </div>
             </header>
 
-            <!-- Quick Stats & Search -->
-            <section class="mt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="col-span-2 flex flex-col md:flex-row gap-3">
-                    <div class="flex-1 grid grid-cols-3 gap-3">
-                        <div class="rounded-2xl p-4 bg-white/70 dark:bg-slate-800 shadow-sm">
-                            <p class="text-xs text-slate-500">Active</p>
-                            <p id="statActive" class="text-2xl font-bold">0</p>
-                        </div>
-                        <div class="rounded-2xl p-4 bg-white/70 dark:bg-slate-800 shadow-sm">
-                            <p class="text-xs text-slate-500">Overdue</p>
-                            <p id="statOverdue" class="text-2xl font-bold">0</p>
-                        </div>
-                        <div class="rounded-2xl p-4 bg-white/70 dark:bg-slate-800 shadow-sm">
-                            <p class="text-xs text-slate-500">Completed</p>
-                            <p id="statDone" class="text-2xl font-bold">0</p>
-                        </div>
+            <!-- Top bar: stats + search + view switcher -->
+            <section class="mt-5 grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div class="col-span-1 grid grid-cols-3 gap-3">
+                    <div class="rounded-2xl p-4 bg-white/70 dark:bg-slate-800 shadow-sm">
+                        <p class="text-xs text-slate-500">Active</p>
+                        <p id="statActive" class="text-2xl font-bold">0</p>
+                    </div>
+                    <div class="rounded-2xl p-4 bg-white/70 dark:bg-slate-800 shadow-sm">
+                        <p class="text-xs text-slate-500">Overdue</p>
+                        <p id="statOverdue" class="text-2xl font-bold">0</p>
+                    </div>
+                    <div class="rounded-2xl p-4 bg-white/70 dark:bg-slate-800 shadow-sm">
+                        <p class="text-xs text-slate-500">Completed</p>
+                        <p id="statDone" class="text-2xl font-bold">0</p>
                     </div>
                 </div>
-                <div class="col-span-1">
-                    <div class="relative">
+                <div class="col-span-2 flex gap-2">
+                    <div class="relative flex-1">
                         <input id="search" type="search" placeholder="Search (press k)"
-                            class="w-full px-4 py-3 pr-10 rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+                            class="w-full h-full px-4 py-3 pr-10 rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-indigo-500" />
                         <svg class="absolute right-3 top-1/2 -translate-y-1/2 size-5 opacity-60" viewBox="0 0 24 24"
                             fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="11" cy="11" r="8" />
                             <path d="m21 21-4.3-4.3" />
                         </svg>
                     </div>
+                    <div class="flex items-center gap-1 bg-white/70 dark:bg-slate-800 rounded-2xl shadow-sm px-2">
+                        <button id="viewList"
+                            class="px-3 py-2 text-sm rounded-xl bg-indigo-600 text-white">List</button>
+                        <button id="viewKanban" class="px-3 py-2 text-sm rounded-xl">Kanban</button>
+                        <button id="viewCalendar" class="px-3 py-2 text-sm rounded-xl">Calendar</button>
+                    </div>
                 </div>
             </section>
 
             <!-- Add Task Card -->
             <section class="mt-6 rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm p-4 md:p-5">
-                <form id="taskForm" class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <form id="taskForm" class="grid grid-cols-1 md:grid-cols-6 gap-3">
                     <div class="md:col-span-2">
                         <label class="text-xs text-slate-500">Title</label>
                         <input id="title" required placeholder="e.g. Ship MVP, write blog, book tickets…"
@@ -101,6 +108,11 @@
                     <div>
                         <label class="text-xs text-slate-500">Due</label>
                         <input id="due" type="date"
+                            class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" />
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">Time</label>
+                        <input id="time" type="time"
                             class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" />
                     </div>
                     <div>
@@ -117,20 +129,49 @@
                         <input id="tags" placeholder="work, ui, quick"
                             class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" />
                     </div>
-                    <div class="md:col-span-5">
+                    <div class="md:col-span-6">
                         <label class="text-xs text-slate-500">Notes</label>
                         <textarea id="notes" rows="2" placeholder="Optional details…"
                             class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
                     </div>
-                    <div class="md:col-span-5 flex items-center justify-end gap-2">
-                        <button type="reset" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700">Reset</button>
-                        <button class="px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold shadow">Add
-                            Task</button>
+                    <div class="md:col-span-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="text-xs text-slate-500">Recurring</label>
+                            <select id="recurring"
+                                class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="none">None</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="custom">Custom interval…</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-500">Every (days)</label>
+                            <input id="recurringEvery" type="number" min="1" value="1"
+                                class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500" />
+                        </div>
+                        <div class="flex items-end">
+                            <label class="inline-flex items-center gap-2 text-sm"><input id="notifyToggle"
+                                    type="checkbox" class="size-4"> Remind me at due time</label>
+                        </div>
+                        <div class="flex items-end">
+                            <button type="button" id="quickAdd"
+                                class="px-3 py-2 rounded-xl bg-emerald-600 text-white">Quick Add (⌘/Ctrl+Enter)</button>
+                        </div>
+                    </div>
+                    <div class="md:col-span-6 flex items-center justify-between gap-2">
+                        <p class="text-xs text-slate-500">Tips: press <kbd
+                                class="px-1 rounded bg-slate-200 dark:bg-slate-700">n</kbd> to focus title, <kbd
+                                class="px-1 rounded bg-slate-200 dark:bg-slate-700">k</kbd> to search.</p>
+                        <div class="flex items-center gap-2">
+                            <button type="reset"
+                                class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700">Reset</button>
+                            <button class="px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold shadow">Add
+                                Task</button>
+                        </div>
                     </div>
                 </form>
-                <p class="mt-2 text-xs text-slate-500">Tips: press <kbd
-                        class="px-1 rounded bg-slate-200 dark:bg-slate-700">n</kbd> to focus title, <kbd
-                        class="px-1 rounded bg-slate-200 dark:bg-slate-700">k</kbd> to search.</p>
             </section>
 
             <!-- Filters -->
@@ -139,6 +180,7 @@
                     <button data-filter="status:all" class="chip active">All</button>
                     <button data-filter="status:open" class="chip">Open</button>
                     <button data-filter="status:done" class="chip">Done</button>
+                    <button data-filter="status:archived" class="chip">Archived</button>
                 </div>
                 <div class="flex items-center gap-2 bg-white/70 dark:bg-slate-800 rounded-2xl p-2 shadow-sm">
                     <button data-filter="sort:created" class="chip active">Newest</button>
@@ -152,42 +194,93 @@
                         padding: .4rem .7rem;
                         border-radius: 999px;
                         font-size: .8rem;
-                        background: transparent;
+                        background: transparent
                     }
 
                     .chip.active {
-                        background: rgba(99, 102, 241, .15);
+                        background: rgba(99, 102, 241, .15)
                     }
                 </style>
             </section>
 
-            <!-- Task List -->
-            <section class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm p-3">
-                    <div class="flex items-center justify-between px-1">
-                        <h2 class="text-sm font-semibold">Open Tasks</h2>
-                        <button id="completeSelected"
-                            class="text-xs px-2 py-1 rounded-lg bg-emerald-600 text-white">Complete Selected</button>
+            <!-- Views Container -->
+            <section id="viewContainer" class="mt-4">
+                <!-- List View -->
+                <div id="listView" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm p-3">
+                        <div class="flex items-center justify-between px-1">
+                            <h2 class="text-sm font-semibold">Open Tasks</h2>
+                            <div class="flex items-center gap-2">
+                                <button id="completeSelected"
+                                    class="text-xs px-2 py-1 rounded-lg bg-emerald-600 text-white">Complete
+                                    Selected</button>
+                                <button id="archiveSelected"
+                                    class="text-xs px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700">Archive
+                                    Selected</button>
+                            </div>
+                        </div>
+                        <ul id="openList" class="mt-2 space-y-2 min-h-20"></ul>
                     </div>
-                    <ul id="openList" class="mt-2 space-y-2 min-h-20"></ul>
+                    <div class="rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm p-3">
+                        <div class="flex items-center justify-between px-1">
+                            <h2 class="text-sm font-semibold">Completed <span id="collapseDoneTip"
+                                    class="text-xs text-slate-500"></span></h2>
+                            <div class="flex items-center gap-2">
+                                <button id="toggleDone"
+                                    class="text-xs px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700">Hide</button>
+                                <button id="deleteDone"
+                                    class="text-xs px-2 py-1 rounded-lg bg-rose-600 text-white">Delete Done</button>
+                            </div>
+                        </div>
+                        <ul id="doneList" class="mt-2 space-y-2 min-h-20"></ul>
+                    </div>
                 </div>
-                <div class="rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm p-3">
-                    <div class="flex items-center justify-between px-1">
-                        <h2 class="text-sm font-semibold">Completed <span id="collapseDoneTip"
-                                class="text-xs text-slate-500"></span></h2>
-                        <div class="flex items-center gap-2">
-                            <button id="toggleDone"
-                                class="text-xs px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700">Hide</button>
-                            <button id="deleteDone" class="text-xs px-2 py-1 rounded-lg bg-rose-600 text-white">Delete
-                                Done</button>
+
+                <!-- Kanban View -->
+                <div id="kanbanView" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm p-3" data-col="P1">
+                        <div class="flex items-center justify-between px-1 mb-2">
+                            <h2 class="text-sm font-semibold">High (P1)</h2><span id="kP1"
+                                class="text-xs opacity-60">0</span>
+                        </div>
+                        <ul class="kanCol space-y-2 min-h-20" data-col="P1"></ul>
+                    </div>
+                    <div class="rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm p-3" data-col="P2">
+                        <div class="flex items-center justify-between px-1 mb-2">
+                            <h2 class="text-sm font-semibold">Medium (P2)</h2><span id="kP2"
+                                class="text-xs opacity-60">0</span>
+                        </div>
+                        <ul class="kanCol space-y-2 min-h-20" data-col="P2"></ul>
+                    </div>
+                    <div class="rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm p-3" data-col="P3">
+                        <div class="flex items-center justify-between px-1 mb-2">
+                            <h2 class="text-sm font-semibold">Low (P3)</h2><span id="kP3"
+                                class="text-xs opacity-60">0</span>
+                        </div>
+                        <ul class="kanCol space-y-2 min-h-20" data-col="P3"></ul>
+                    </div>
+                </div>
+
+                <!-- Calendar View -->
+                <div id="calendarView" class="hidden rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="text-lg font-semibold" id="calTitle">Calendar</div>
+                        <div class="flex gap-2">
+                            <button id="prevMonth"
+                                class="px-3 py-1 rounded-xl bg-slate-200 dark:bg-slate-700">Prev</button>
+                            <button id="todayBtn"
+                                class="px-3 py-1 rounded-xl bg-slate-200 dark:bg-slate-700">Today</button>
+                            <button id="nextMonth"
+                                class="px-3 py-1 rounded-xl bg-slate-200 dark:bg-slate-700">Next</button>
                         </div>
                     </div>
-                    <ul id="doneList" class="mt-2 space-y-2 min-h-20"></ul>
+                    <div id="calendarGrid" class="grid grid-cols-7 gap-2"></div>
                 </div>
             </section>
 
-            <footer class="mt-8 text-center text-xs text-slate-500">Local-first · Drag to reorder · Click tag chips to
-                filter</footer>
+            <!-- Footer -->
+            <footer class="mt-8 text-center text-xs text-slate-500">Drag to reorder · Click tag chips to filter · Drop
+                between Kanban columns to change priority</footer>
         </div>
 
         <!-- Toast -->
@@ -195,15 +288,95 @@
             class="fixed bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl bg-slate-900 text-white text-sm shadow-lg opacity-0 pointer-events-none transition">
         </div>
 
+        <!-- Modal: Edit Task (no prompt) -->
+        <dialog id="editModal" class="rounded-2xl p-0 w-full max-w-2xl">
+            <form method="dialog" id="editForm" class="p-4 bg-white dark:bg-slate-800 rounded-2xl">
+                <h3 class="text-lg font-semibold mb-3">Edit Task</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-slate-500">Title</label>
+                        <input id="e_title" class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700" />
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">Due</label>
+                        <input id="e_due" type="date"
+                            class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700" />
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">Time</label>
+                        <input id="e_time" type="time"
+                            class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700" />
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">Priority</label>
+                        <select id="e_priority" class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700">
+                            <option value="P1">P1</option>
+                            <option value="P2">P2</option>
+                            <option value="P3">P3</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-xs text-slate-500">Tags (comma)</label>
+                        <input id="e_tags" class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700" />
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-xs text-slate-500">Notes</label>
+                        <textarea id="e_notes" rows="3"
+                            class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-xs text-slate-500">Subtasks (one per line)</label>
+                        <textarea id="e_subtasks" rows="3"
+                            class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700"
+                            placeholder="Example:\nDesign wireframe\nWrite copy\nShare for review"></textarea>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-between">
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="e_duplicate"
+                            class="px-3 py-2 rounded-xl bg-slate-200 dark:bg-slate-700">Duplicate</button>
+                        <button type="button" id="e_archive"
+                            class="px-3 py-2 rounded-xl bg-slate-200 dark:bg-slate-700">Archive</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button value="cancel"
+                            class="px-3 py-2 rounded-xl bg-slate-200 dark:bg-slate-700">Cancel</button>
+                        <button value="save" class="px-3 py-2 rounded-xl bg-indigo-600 text-white">Save</button>
+                    </div>
+                </div>
+            </form>
+        </dialog>
+
+        <!-- Pomodoro Dock -->
+        <div class="fixed right-4 bottom-10 z-50">
+            <div class="rounded-2xl shadow-lg bg-white dark:bg-slate-800 p-3 flex items-center gap-3">
+                <div>
+                    <div class="text-xs opacity-60">Pomodoro</div>
+                    <div id="pomoTime" class="text-xl font-bold tabular-nums">25:00</div>
+                    <div class="text-xs" id="pomoStatus">Focus</div>
+                </div>
+                <select id="pomoTask" class="rounded-xl bg-slate-100 dark:bg-slate-700 text-sm"></select>
+                <div class="flex gap-1">
+                    <button id="pomoStart" class="px-2 py-1 rounded-lg bg-emerald-600 text-white text-xs">Start</button>
+                    <button id="pomoPause"
+                        class="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-xs">Pause</button>
+                    <button id="pomoReset"
+                        class="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-xs">Reset</button>
+                </div>
+            </div>
+        </div>
+
         <script>
             const $ = (sel, el = document) => el.querySelector(sel);
             const $$ = (sel, el = document) => Array.from(el.querySelectorAll(sel));
-            const storeKey = 'taskCurator_v1';
+            const storeKey = 'taskCurator_v2';
 
             let state = {
                 tasks: [],
                 filter: { status: 'all', sort: 'created', tag: null, q: '' },
-                ui: { showDone: true }
+                ui: { showDone: true, view: 'list' },
+                calendar: { year: new Date().getFullYear(), month: new Date().getMonth() },
+                pomo: { mode: 'focus', remaining: 25 * 60, running: false, taskId: null }
             };
 
             // Helpers
@@ -211,19 +384,22 @@
             const todayISO = () => new Date().toISOString().slice(0, 10);
             const parseTags = (t) => (t || '').split(',').map(s => s.trim()).filter(Boolean);
             const fmtDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString() : '—';
-            const comparePriority = (a, b) => ({ 'P1': 1, 'P2': 2, 'P3': 3 }[a] - { 'P1': 1, 'P2': 2, 'P3': 3 }[b]);
+            const comparePriority = (a, b) => ({ P1: 1, P2: 2, P3: 3 }[a] - ({ P1: 1, P2: 2, P3: 3 }[b]));
             const toast = (msg) => { const el = $('#toast'); el.textContent = msg; el.classList.remove('opacity-0'); el.classList.add('opacity-100'); setTimeout(() => { el.classList.add('opacity-0'); el.classList.remove('opacity-100'); }, 1400); };
+            const priorityClass = (p) => p === 'P1' ? 'bg-rose-200 dark:bg-rose-900/40' : p === 'P2' ? 'bg-amber-200 dark:bg-amber-900/40' : 'bg-emerald-200 dark:bg-emerald-900/40';
+            const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 
             // Persistence
             function save() { localStorage.setItem(storeKey, JSON.stringify(state)); }
-            function load() { const raw = localStorage.getItem(storeKey); if (!raw) return; try { const s = JSON.parse(raw); if (s.tasks) state.tasks = s.tasks; if (s.filter) state.filter = s.filter; if (s.ui) state.ui = s.ui; } catch (e) { } }
+            function load() { const raw = localStorage.getItem(storeKey); if (!raw) return; try { const s = JSON.parse(raw); Object.assign(state, { ...state, ...s }); } catch (e) { } }
 
-            // Rendering
+            // Core render
             function render() {
                 const q = state.filter.q.toLowerCase();
                 const { status, tag } = state.filter;
-                const open = state.tasks.filter(t => !t.done);
-                const done = state.tasks.filter(t => t.done);
+                const open = state.tasks.filter(t => !t.done && !t.archived);
+                const done = state.tasks.filter(t => t.done && !t.archived);
+                const archived = state.tasks.filter(t => t.archived);
 
                 // Stats
                 const overdue = open.filter(t => t.due && t.due < todayISO());
@@ -235,9 +411,7 @@
                 const tagCounts = {};
                 state.tasks.flatMap(t => t.tags).forEach(tag => tagCounts[tag] = (tagCounts[tag] || 0) + 1);
                 const tagBar = $('#tagBar');
-                tagBar.innerHTML = Object.entries(tagCounts).map(([tg, c]) => `
-        <button data-filter="tag:${tg}" class="chip ${state.filter.tag === tg ? 'active' : ''}">#${tg} <span class="opacity-60">(${c})</span></button>
-      `).join('');
+                tagBar.innerHTML = Object.entries(tagCounts).map(([tg, c]) => `<button data-filter="tag:${tg}" class="chip ${state.filter.tag === tg ? 'active' : ''}">#${tg} <span class="opacity-60">(${c})</span></button>`).join('');
 
                 // Sort
                 const sorters = {
@@ -250,23 +424,54 @@
 
                 function applyFilters(list) {
                     return list
-                        .filter(t => status === 'all' || (status === 'open' && !t.done) || (status === 'done' && t.done))
+                        .filter(t => status === 'all' || (status === 'open' && !t.done && !t.archived) || (status === 'done' && t.done && !t.archived) || (status === 'archived' && t.archived))
                         .filter(t => !tag || t.tags.includes(tag))
-                        .filter(t => !q || [t.title, t.notes, t.tags.join(' ')].join(' ').toLowerCase().includes(q))
+                        .filter(t => !q || [t.title, t.notes, t.tags.join(' '), (t.subtasks || []).map(s => s.text).join(' ')].join(' ').toLowerCase().includes(q))
                         .sort(sorters[state.filter.sort] || sorters.created);
                 }
 
-                const openList = $('#openList');
-                const doneList = $('#doneList');
+                // View switching
+                $('#listView').classList.toggle('hidden', state.ui.view !== 'list');
+                $('#kanbanView').classList.toggle('hidden', state.ui.view !== 'kanban');
+                $('#calendarView').classList.toggle('hidden', state.ui.view !== 'calendar');
+                $('#viewList').classList.toggle('bg-indigo-600', state.ui.view === 'list');
+                $('#viewList').classList.toggle('text-white', state.ui.view === 'list');
+                $('#viewKanban').classList.toggle('bg-indigo-600', state.ui.view === 'kanban');
+                $('#viewKanban').classList.toggle('text-white', state.ui.view === 'kanban');
+                $('#viewCalendar').classList.toggle('bg-indigo-600', state.ui.view === 'calendar');
+                $('#viewCalendar').classList.toggle('text-white', state.ui.view === 'calendar');
 
-                openList.innerHTML = applyFilters(open).map(renderItem).join('');
-                doneList.innerHTML = state.ui.showDone ? applyFilters(done).map(renderItem).join('') : '';
+                // List view
+                if (state.ui.view === 'list') {
+                    const openList = $('#openList');
+                    const doneList = $('#doneList');
+                    openList.innerHTML = applyFilters(open).map(renderItem).join('');
+                    doneList.innerHTML = state.ui.showDone ? applyFilters(done).map(renderItem).join('') : '';
+                    $('#toggleDone').textContent = state.ui.showDone ? 'Hide' : 'Show';
+                    $('#collapseDoneTip').textContent = state.ui.showDone ? '' : '(hidden)';
+                    $$('#openList li, #doneList li').forEach(wireItem);
+                    $('#completeSelected').style.display = $$('#openList input[type="checkbox"]').length ? 'inline-flex' : 'none';
+                }
 
-                $('#toggleDone').textContent = state.ui.showDone ? 'Hide' : 'Show';
-                $('#collapseDoneTip').textContent = state.ui.showDone ? '' : '(hidden)';
+                // Kanban view
+                if (state.ui.view === 'kanban') {
+                    const cols = $$('.kanCol'); cols.forEach(c => c.innerHTML = '');
+                    const byPr = { P1: [], P2: [], P3: [] };
+                    applyFilters(open).forEach(t => byPr[t.priority].push(t));
+                    ['P1', 'P2', 'P3'].forEach(p => {
+                        const list = $(`.kanCol[data-col="${p}"]`);
+                        list.innerHTML = byPr[p].map(renderItem).join('');
+                        list.closest('[data-col]').querySelector('span').textContent = byPr[p].length;
+                        $$("li", list).forEach(wireItem);
+                        // column dnd drop target
+                        list.addEventListener('dragover', e => { e.preventDefault(); list.classList.add('drag-over'); });
+                        list.addEventListener('dragleave', () => list.classList.remove('drag-over'));
+                        list.addEventListener('drop', e => { e.preventDefault(); list.classList.remove('drag-over'); const draggedId = e.dataTransfer.getData('text/plain'); const t = findTask(draggedId); if (!t) return; t.priority = p; save(); render(); });
+                    });
+                }
 
-                // Wire item events
-                $$('#openList li, #doneList li').forEach(wireItem);
+                // Calendar view
+                if (state.ui.view === 'calendar') renderCalendar(applyFilters(open.concat(done)));
 
                 // Chips
                 $$('#tagBar .chip, section .chip').forEach(btn => {
@@ -276,21 +481,24 @@
                         if (k === 'status') state.filter.status = v;
                         if (k === 'sort') state.filter.sort = v;
                         $$('#tagBar .chip, section .chip').forEach(c => c.classList.remove('active'));
-                        // Reapply active states
-                        $$('button[data-filter="status:' + state.filter.status + '"], button[data-filter="sort:' + state.filter.sort + '"]').forEach(c => c.classList.add('active'));
-                        if (state.filter.tag) $$('button[data-filter="tag:' + state.filter.tag + '"]').forEach(c => c.classList.add('active'));
+                        $$(`button[data-filter="status:${state.filter.status}"]`).forEach(c => c.classList.add('active'));
+                        $$(`button[data-filter="sort:${state.filter.sort}"]`).forEach(c => c.classList.add('active'));
+                        if (state.filter.tag) $$(`button[data-filter="tag:${state.filter.tag}"]`).forEach(c => c.classList.add('active'));
                         save(); render();
                     }
                 });
 
-                // Bulk complete visibility
-                $('#completeSelected').style.display = $$('#openList input[type="checkbox"]').length ? 'inline-flex' : 'none';
+                // Pomodoro task list
+                const taskOpts = ['<option value="">— pick task —</option>'].concat(open.map(t => `<option value="${t.id}" ${state.pomo.taskId === t.id ? 'selected' : ''}>${escapeHTML(t.title)}</option>`));
+                $('#pomoTask').innerHTML = taskOpts.join('');
             }
 
             function renderItem(t) {
-                const dueBadge = t.due ? `<span class="px-2 py-0.5 rounded-lg text-xs ${(!t.done && t.due < todayISO()) ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200' : 'bg-slate-200 dark:bg-slate-700'}">${fmtDate(t.due)}</span>` : '';
-                const prBadge = `<span class="px-2 py-0.5 rounded-lg text-xs ${t.priority === 'P1' ? 'bg-rose-200 dark:bg-rose-900/40' : 't.priority===\'P2\'' ? 'bg-amber-200 dark:bg-amber-900/40' : 'bg-emerald-200 dark:bg-emerald-900/40'}">${t.priority}</span>`;
+                const overdue = (!t.done && t.due && t.due < todayISO());
+                const dueBadge = t.due ? `<span class="px-2 py-0.5 rounded-lg text-xs ${overdue ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200' : 'bg-slate-200 dark:bg-slate-700'}">${fmtDate(t.due)}${t.time ? (' · ' + t.time) : ''}</span>` : '';
+                const prBadge = `<span class="px-2 py-0.5 rounded-lg text-xs ${priorityClass(t.priority)}">${t.priority}</span>`;
                 const tags = t.tags.map(tag => `<button data-action="filter-tag" data-tag="${tag}" class="text-xs px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-700">#${tag}</button>`).join(' ');
+                const subtasks = (t.subtasks || []).map((s, i) => `<label class="flex items-center gap-2 text-sm"><input type="checkbox" data-action="toggle-sub" data-idx="${i}" ${s.done ? 'checked' : ''}/> <span class="${s.done ? 'line-through opacity-60' : ''}">${escapeHTML(s.text)}</span></label>`).join('');
                 return `
         <li data-id="${t.id}" draggable="true" class="group rounded-xl p-3 bg-slate-100 dark:bg-slate-700/60 hover:bg-slate-100/80 transition">
           <div class="flex items-start gap-3">
@@ -300,15 +508,18 @@
                 <h3 class="font-semibold truncate">${escapeHTML(t.title)}</h3>
                 ${dueBadge}
                 ${prBadge}
+                ${t.archived ? '<span class="text-xs px-2 py-0.5 rounded-lg bg-slate-300 dark:bg-slate-600">Archived</span>' : ''}
               </div>
               ${t.notes ? `<p class="text-sm text-slate-600 dark:text-slate-300 mt-1 whitespace-pre-wrap">${escapeHTML(t.notes)}</p>` : ''}
+              ${(t.subtasks && t.subtasks.length) ? `<div class="mt-2 grid gap-1">${subtasks}</div>` : ''}
               <div class="mt-2 flex flex-wrap gap-2">${tags}</div>
-              <div class="mt-2 text-xs opacity-60">Added ${new Date(t.createdAt).toLocaleString()}</div>
+              <div class="mt-2 text-xs opacity-60">Added ${new Date(t.createdAt).toLocaleString()} · ${t.tracked ? secsToHms(t.tracked) : '0:00'}</div>
             </div>
             <div class="flex flex-col gap-2 items-end">
               <button data-action="edit" class="text-xs px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-600">Edit</button>
-              <button data-action="delete" class="text-xs px-2 py-1 rounded-lg bg-rose-600 text-white">Delete</button>
+              <button data-action="archive" class="text-xs px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-600">${t.archived ? 'Unarchive' : 'Archive'}</button>
               <button data-action="duplicate" class="text-xs px-2 py-1 rounded-lg bg-indigo-600 text-white">Duplicate</button>
+              <button data-action="delete" class="text-xs px-2 py-1 rounded-lg bg-rose-600 text-white">Delete</button>
               <div class="opacity-40 group-hover:opacity-100 select-none cursor-grab" title="Drag to reorder">⠿</div>
             </div>
           </div>
@@ -323,108 +534,131 @@
                     if (act === 'delete') { delTask(id); }
                     if (act === 'duplicate') { duplicateTask(id); }
                     if (act === 'edit') { openEditor(id); }
+                    if (act === 'archive') { toggleArchive(id); }
                     if (act === 'filter-tag') { state.filter.tag = e.target.dataset.tag; render(); save(); }
+                    if (act === 'toggle-sub') { toggleSubtask(id, Number(e.target.dataset.idx), e.target.checked); }
                 });
-
-                // Drag & drop reordering (open list only)
-                li.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', id);
-                    li.classList.add('drag-ghost');
-                });
+                li.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', id); li.classList.add('drag-ghost'); });
                 li.addEventListener('dragend', () => li.classList.remove('drag-ghost'));
                 li.addEventListener('dragover', (e) => { e.preventDefault(); li.classList.add('drag-over'); });
                 li.addEventListener('dragleave', () => li.classList.remove('drag-over'));
-                li.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    li.classList.remove('drag-over');
-                    const draggedId = e.dataTransfer.getData('text/plain');
-                    if (!draggedId || draggedId === id) return;
-                    reorder(draggedId, id);
-                });
+                li.addEventListener('drop', (e) => { e.preventDefault(); li.classList.remove('drag-over'); const draggedId = e.dataTransfer.getData('text/plain'); if (!draggedId || draggedId === id) return; reorder(draggedId, id); });
             }
 
             function reorder(dragId, dropId) {
-                const list = state.tasks.filter(t => !t.done).sort((a, b) => (a.order || 0) - (b.order || 0));
+                const list = state.tasks.filter(t => !t.done && !t.archived).sort((a, b) => (a.order || 0) - (b.order || 0));
                 const dragIndex = list.findIndex(t => t.id === dragId);
                 const dropIndex = list.findIndex(t => t.id === dropId);
                 if (dragIndex < 0 || dropIndex < 0) return;
-                const [moved] = list.splice(dragIndex, 1);
-                list.splice(dropIndex, 0, moved);
-                // Reassign incremental order values for open tasks
-                list.forEach((t, i) => { const ref = state.tasks.find(x => x.id === t.id); ref.order = i; });
+                const [moved] = list.splice(dragIndex, 1); list.splice(dropIndex, 0, moved);
+                list.forEach((t, i) => { const ref = findTask(t.id); ref.order = i; });
                 save(); render();
             }
 
             // CRUD
-            function addTask({ title, notes, due, priority, tags }) {
-                const order = (state.tasks.filter(t => !t.done).reduce((m, t) => Math.max(m, t.order || 0), -1) + 1);
-                state.tasks.push({ id: uid(), title, notes, due: due || '', priority, tags, createdAt: Date.now(), done: false, order });
-                save(); render(); toast('Task added');
+            function addTask({ title, notes, due, time, priority, tags, recurring, every, notify }) {
+                const order = (state.tasks.filter(t => !t.done && !t.archived).reduce((m, t) => Math.max(m, t.order || 0), -1) + 1);
+                const t = { id: uid(), title, notes, due: due || '', time: time || '', priority, tags, createdAt: Date.now(), done: false, order, archived: false, subtasks: [], recurring, every: Number(every) || 1, notify: !!notify, tracked: 0 };
+                state.tasks.push(t); scheduleNotification(t); save(); render(); toast('Task added');
             }
+            const findTask = (id) => state.tasks.find(x => x.id === id);
             function delTask(id) { state.tasks = state.tasks.filter(t => t.id !== id); save(); render(); toast('Deleted'); }
-            function duplicateTask(id) { const t = state.tasks.find(x => x.id === id); if (!t) return; const copy = { ...t, id: uid(), createdAt: Date.now(), done: false }; state.tasks.push(copy); save(); render(); toast('Duplicated'); }
+            function duplicateTask(id) { const t = findTask(id); if (!t) return; const copy = { ...t, id: uid(), createdAt: Date.now(), done: false, archived: false }; state.tasks.push(copy); save(); render(); toast('Duplicated'); }
             function toggleDone(id, val) {
-                const t = state.tasks.find(x => x.id === id); if (!t) return; t.done = val; if (!val) { // back to open -> give it max order
-                    t.order = (state.tasks.filter(x => !x.done).reduce((m, x) => Math.max(m, x.order || 0), -1) + 1);
+                const t = findTask(id); if (!t) return; t.done = val; if (!val) { t.order = (state.tasks.filter(x => !x.done && !x.archived).reduce((m, x) => Math.max(m, x.order || 0), -1) + 1); } else if (val) { // handle recurring
+                    if (t.recurring && t.recurring !== 'none') { advanceRecurring(t); }
                 }
                 save(); render();
             }
+            function toggleArchive(id) { const t = findTask(id); if (!t) return; t.archived = !t.archived; save(); render(); }
+            function toggleSubtask(id, idx, val) { const t = findTask(id); if (!t) return; t.subtasks[idx].done = val; save(); render(); }
 
-            // Edit dialog (very lightweight inline)
             function openEditor(id) {
-                const t = state.tasks.find(x => x.id === id); if (!t) return;
-                const title = prompt('Title', t.title); if (title === null) return;
-                const notes = prompt('Notes', t.notes || ''); if (notes === null) return;
-                const due = prompt('Due YYYY-MM-DD', t.due || ''); if (due === null) return;
-                const priority = prompt('Priority P1/P2/P3', t.priority); if (priority === null) return;
-                const tags = prompt('Tags comma', t.tags.join(', ')); if (tags === null) return;
-                Object.assign(t, { title, notes, due, priority, tags: parseTags(tags) }); save(); render(); toast('Updated');
+                const t = findTask(id); if (!t) return;
+                const dlg = $('#editModal');
+                $('#e_title').value = t.title; $('#e_due').value = t.due; $('#e_time').value = t.time || ''; $('#e_priority').value = t.priority; $('#e_tags').value = t.tags.join(', '); $('#e_notes').value = t.notes || ''; $('#e_subtasks').value = (t.subtasks || []).map(s => s.text).join('\n');
+                dlg.returnValue = 'cancel';
+                dlg.showModal();
+                $('#e_duplicate').onclick = () => { duplicateTask(id); };
+                $('#e_archive').onclick = () => { toggleArchive(id); };
+                $('#editForm').onsubmit = (e) => { e.preventDefault(); };
+                dlg.onclose = () => { if (dlg.returnValue === 'save') { Object.assign(t, { title: $('#e_title').value, notes: $('#e_notes').value, due: $('#e_due').value, time: $('#e_time').value, priority: $('#e_priority').value, tags: parseTags($('#e_tags').value), subtasks: ($('#e_subtasks').value.split('\n').filter(Boolean).map(s => ({ text: s, done: false }))) }); save(); render(); toast('Updated'); } };
             }
 
-            // Bulk
-            function completeSelected() {
-                $$('#openList input[type="checkbox"]').forEach(cb => { if (cb.checked) { const id = cb.closest('li').dataset.id; toggleDone(id, true); } });
+            function completeSelected() { $$('#openList input[type="checkbox"]').forEach(cb => { if (cb.checked) { const id = cb.closest('li').dataset.id; toggleDone(id, true); } }); }
+
+            // Recurring
+            function advanceRecurring(t) {
+                const base = t.due ? new Date(t.due + 'T00:00:00') : new Date();
+                if (t.recurring === 'daily') { base.setDate(base.getDate() + 1); }
+                else if (t.recurring === 'weekly') { base.setDate(base.getDate() + 7); }
+                else if (t.recurring === 'monthly') { base.setMonth(base.getMonth() + 1); }
+                else if (t.recurring === 'custom') { base.setDate(base.getDate() + (t.every || 1)); }
+                t.due = base.toISOString().slice(0, 10);
+                t.done = false; // create a new occurrence by duplicating? Here we rollover
+                scheduleNotification(t);
+                toast('Next occurrence scheduled');
+            }
+
+            // Notifications
+            async function ensureNotifyPermission() {
+                if (!('Notification' in window)) return false;
+                if (Notification.permission === 'granted') return true;
+                try { const p = await Notification.requestPermission(); return p === 'granted'; } catch { return false; }
+            }
+            function scheduleNotification(t) {
+                if (!t.notify || !t.due) return;
+                const when = new Date(t.due + 'T' + (t.time || '09:00')); const delta = when - new Date();
+                if (delta <= 0) return; // past
+                setTimeout(() => { try { new Notification('Task due: ' + t.title, { body: (t.time ? t.time + ' · ' : '') + (t.notes || '') }); } catch (e) { } }, Math.min(delta, 2 ** 31 - 1));
             }
 
             // Utilities
             function escapeHTML(s) { return (s || '').replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c])); }
+            function secsToHms(s) { s = Math.floor(s || 0); const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); const mm = String(m).padStart(2, '0'); const ss = String(s % 60).padStart(2, '0'); return (h ? h + ':' : '') + mm + ':' + ss; }
 
-            // Form
+            // Form & Quick add
             $('#taskForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const title = $('#title').value.trim(); if (!title) return;
-                addTask({
-                    title,
-                    notes: $('#notes').value.trim(),
-                    due: $('#due').value,
-                    priority: $('#priority').value,
-                    tags: parseTags($('#tags').value)
-                });
+                addTask({ title, notes: $('#notes').value.trim(), due: $('#due').value, time: $('#time').value, priority: $('#priority').value, tags: parseTags($('#tags').value), recurring: $('#recurring').value, every: $('#recurringEvery').value, notify: $('#notifyToggle').checked });
                 e.target.reset(); $('#title').focus();
             });
+            $('#quickAdd').addEventListener('click', () => quickAdd());
+            window.addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') quickAdd(); });
+            function quickAdd() {
+                const s = prompt('Quick add (title @YYYY-MM-DD #tags p1/p2/p3 !remind)'); if (!s) return;
+                const title = s.replace(/@[\d-]+/, '').replace(/#\w+/g, '').replace(/\bp[123]\b/i, '').replace(/!remind/, '').trim();
+                const dueMatch = s.match(/@(\d{4}-\d{2}-\d{2})/); const due = dueMatch ? dueMatch[1] : '';
+                const prMatch = s.match(/\bp([123])\b/i); const priority = prMatch ? ('P' + prMatch[1]) : 'P3';
+                const notify = /!remind/.test(s);
+                const tags = (s.match(/#(\w+)/g) || []).map(x => x.slice(1));
+                addTask({ title, notes: '', due, time: '', priority, tags, recurring: 'none', every: 1, notify });
+            }
 
             // Filters & search
             $('#search').addEventListener('input', (e) => { state.filter.q = e.target.value.trim(); render(); save(); });
             $('#toggleDone').addEventListener('click', () => { state.ui.showDone = !state.ui.showDone; save(); render(); });
             $('#deleteDone').addEventListener('click', () => { if (confirm('Delete all completed tasks?')) { state.tasks = state.tasks.filter(t => !t.done); save(); render(); } });
             $('#completeSelected').addEventListener('click', completeSelected);
+            $('#archiveSelected').addEventListener('click', () => { $$('#openList input[type="checkbox"]').forEach(cb => { if (cb.checked) { const id = cb.closest('li').dataset.id; toggleArchive(id); } }); });
+
+            // View switchers
+            $('#viewList').onclick = () => { state.ui.view = 'list'; save(); render(); };
+            $('#viewKanban').onclick = () => { state.ui.view = 'kanban'; save(); render(); };
+            $('#viewCalendar').onclick = () => { state.ui.view = 'calendar'; save(); render(); };
 
             // Import/Export/Clear
             $('#exportBtn').addEventListener('click', () => {
                 const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob); a.download = 'task-curator-export.json'; a.click(); URL.revokeObjectURL(a.href);
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'task-curator-export.json'; a.click(); URL.revokeObjectURL(a.href);
             });
-
             $('#importInput').addEventListener('change', (e) => {
-                const file = e.target.files[0]; if (!file) return;
-                const reader = new FileReader();
-                reader.onload = () => { try { const data = JSON.parse(reader.result); if (Array.isArray(data.tasks)) state.tasks = data.tasks; if (data.filter) state.filter = data.filter; if (data.ui) state.ui = data.ui; save(); render(); toast('Imported'); } catch (err) { alert('Invalid JSON'); } };
-                reader.readAsText(file);
-                e.target.value = '';
+                const file = e.target.files[0]; if (!file) return; const reader = new FileReader();
+                reader.onload = () => { try { const data = JSON.parse(reader.result); if (Array.isArray(data.tasks)) state.tasks = data.tasks; if (data.filter) state.filter = data.filter; if (data.ui) state.ui = data.ui; if (data.calendar) state.calendar = data.calendar; if (data.pomo) state.pomo = data.pomo; save(); render(); toast('Imported'); } catch (err) { alert('Invalid JSON'); } };
+                reader.readAsText(file); e.target.value = '';
             });
-
-            $('#clearAll').addEventListener('click', () => { if (confirm('This will clear ALL tasks. Continue?')) { state = { tasks: [], filter: { status: 'all', sort: 'created', tag: null, q: '' }, ui: { showDone: true } }; save(); render(); } });
+            $('#clearAll').addEventListener('click', () => { if (confirm('This will clear ALL tasks. Continue?')) { state = { tasks: [], filter: { status: 'all', sort: 'created', tag: null, q: '' }, ui: { showDone: true, view: 'list' }, calendar: { year: new Date().getFullYear(), month: new Date().getMonth() }, pomo: { mode: 'focus', remaining: 25 * 60, running: false, taskId: null } }; save(); render(); } });
 
             // Shortcuts
             window.addEventListener('keydown', (e) => {
@@ -432,14 +666,66 @@
                 if (e.key.toLowerCase() === 'n' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) { $('#title').focus(); }
             });
 
+            // Calendar
+            function renderCalendar(list) {
+                const y = state.calendar.year; const m = state.calendar.month; // 0-based
+                const first = new Date(y, m, 1); const startDay = (first.getDay() + 6) % 7; // Mon=0
+                const daysInMonth = new Date(y, m + 1, 0).getDate();
+                $('#calTitle').textContent = first.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+                const grid = $('#calendarGrid'); grid.innerHTML = '';
+                const headers = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                headers.forEach(h => { const el = document.createElement('div'); el.textContent = h; el.className = 'text-xs font-semibold opacity-60'; grid.appendChild(el); });
+                for (let i = 0; i < startDay; i++) { const pad = document.createElement('div'); pad.className = 'p-2'; grid.appendChild(pad); }
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const iso = new Date(y, m, d).toISOString().slice(0, 10);
+                    const dayTasks = list.filter(t => t.due === iso);
+                    const cell = document.createElement('div');
+                    cell.className = 'p-2 rounded-xl bg-slate-100 dark:bg-slate-700/60 min-h-20';
+                    const head = document.createElement('div'); head.className = 'flex items-center justify-between mb-1';
+                    head.innerHTML = `<span class="text-sm font-semibold">${d}</span> <span class="text-xs opacity-60">${dayTasks.length}</span>`;
+                    cell.appendChild(head);
+                    const listEl = document.createElement('div'); listEl.className = 'space-y-1 max-h-28 overflow-auto';
+                    listEl.innerHTML = dayTasks.map(t => `<div class="text-xs px-2 py-1 rounded-lg ${priorityClass(t.priority)} truncate">${escapeHTML(t.title)}${t.time ? (' · ' + t.time) : ''}</div>`).join('');
+                    cell.appendChild(listEl);
+                    cell.addEventListener('dblclick', () => { // quick create for this date
+                        const title = prompt('New task title for ' + iso); if (!title) return; addTask({ title, notes: '', due: iso, time: '', priority: 'P3', tags: [], recurring: 'none', every: 1, notify: false });
+                    });
+                    grid.appendChild(cell);
+                }
+            }
+            $('#prevMonth').onclick = () => { state.calendar.month--; if (state.calendar.month < 0) { state.calendar.month = 11; state.calendar.year--; } save(); render(); };
+            $('#nextMonth').onclick = () => { state.calendar.month++; if (state.calendar.month > 11) { state.calendar.month = 0; state.calendar.year++; } save(); render(); };
+            $('#todayBtn').onclick = () => { const d = new Date(); state.calendar = { year: d.getFullYear(), month: d.getMonth() }; save(); render(); };
+
+            // Pomodoro logic + time tracking
+            let pomoTimer = null;
+            function updatePomoUI() { $('#pomoTime').textContent = secsToHms(state.pomo.remaining).replace(/^0/, ''); $('#pomoStatus').textContent = state.pomo.mode === 'focus' ? 'Focus' : 'Break'; }
+            function startPomo() {
+                if (state.pomo.running) return; state.pomo.running = true; clearInterval(pomoTimer); let last = Date.now(); pomoTimer = setInterval(() => {
+                    const now = Date.now(); const dt = Math.floor((now - last) / 1000); if (dt > 0) {
+                        state.pomo.remaining = clamp(state.pomo.remaining - dt, 0, 24 * 3600); if (state.pomo.taskId) { const t = findTask(state.pomo.taskId); if (t) { t.tracked = (t.tracked || 0) + dt; } } last = now; updatePomoUI(); if (state.pomo.remaining === 0) { // swap mode
+                            state.pomo.mode = state.pomo.mode === 'focus' ? 'break' : 'focus'; state.pomo.remaining = (state.pomo.mode === 'focus' ? 25 * 60 : 5 * 60); save(); render(); ensureNotifyPermission().then(ok => { if (ok) new Notification('Pomodoro', { body: 'Time for ' + (state.pomo.mode === 'focus' ? 'focus' : 'a break') }); });
+                        }
+                    }
+                }, 1000); save();
+            }
+            function pausePomo() { state.pomo.running = false; clearInterval(pomoTimer); save(); }
+            function resetPomo() { state.pomo.running = false; clearInterval(pomoTimer); state.pomo.mode = 'focus'; state.pomo.remaining = 25 * 60; updatePomoUI(); save(); }
+            $('#pomoStart').onclick = () => startPomo();
+            $('#pomoPause').onclick = () => pausePomo();
+            $('#pomoReset').onclick = () => resetPomo();
+            $('#pomoTask').onchange = (e) => { state.pomo.taskId = e.target.value || null; save(); };
+
             // Init
             load();
-            // Default example on first run
             if (!state.tasks.length) {
-                addTask({ title: 'Welcome to Task Curator', notes: 'Add, filter, drag to reorder. Everything stays in your browser.', due: todayISO(), priority: 'P2', tags: ['welcome', 'demo'] });
-                addTask({ title: 'Try editing me', notes: 'Click Edit → update fields.', due: '', priority: 'P3', tags: ['tips'] });
-                addTask({ title: 'Mark some done', notes: 'Use the checkbox or Complete Selected.', due: '', priority: 'P1', tags: ['tips'] });
+                addTask({ title: 'Welcome to Task Curator Pro', notes: 'List · Kanban · Calendar · Pomodoro · Recurring · Reminders', due: todayISO(), time: '', priority: 'P2', tags: ['welcome', 'demo'], recurring: 'none', every: 1, notify: false });
+                addTask({ title: 'Open the Kanban view', notes: 'Drag between columns to change priority', due: '', time: '', priority: 'P3', tags: ['tips'], recurring: 'none', every: 1, notify: false });
+                addTask({ title: 'Schedule a reminder', notes: 'Turn on “Remind me at due time” when adding', due: '', time: '', priority: 'P1', tags: ['tips'], recurring: 'none', every: 1, notify: false });
             } else { render(); }
+
+            // After first render, ask notification permission opportunistically
+            ensureNotifyPermission();
 
         </script>
     </body>
