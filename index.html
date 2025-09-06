@@ -4,8 +4,10 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Task Curator — Advanced</title>
+        <link rel="shortcut icon" href="./curotask.jpeg" type="image/x-icon">
+        <title>Task Curator — Advanced Pro</title>
         <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <meta name="color-scheme" content="light dark" />
         <style>
             * {
@@ -35,6 +37,56 @@
             dialog::backdrop {
                 background: rgba(0, 0, 0, .35);
             }
+
+            .kanban-col {
+                min-height: 500px;
+            }
+
+            .task-card {
+                transition: all 0.2s ease;
+            }
+
+            .task-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+
+            .progress-bar {
+                transition: width 0.3s ease;
+            }
+
+            @media (prefers-color-scheme: dark) {
+                .task-card:hover {
+                    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+                }
+            }
+
+            /* Animation for new tasks */
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .task-fade-in {
+                animation: fadeIn 0.3s ease forwards;
+            }
+
+            /* Focus mode styling */
+            .focus-mode-active {
+                filter: brightness(0.7);
+            }
+
+            .focus-task {
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+                transform: scale(1.02);
+            }
         </style>
     </head>
 
@@ -43,11 +95,19 @@
             <!-- Header -->
             <header class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="size-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 shadow-lg"></div>
+                    <div
+                        class="size-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 shadow-lg flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                    </div>
                     <div>
                         <h1 class="text-2xl font-extrabold tracking-tight">Task Curator <span
-                                class="text-xs font-normal opacity-70">Pro</span></h1>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">Lightweight, local-first task manager.</p>
+                                class="text-xs font-normal opacity-70">Advanced Pro</span></h1>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Intelligent, local-first task manager with
+                            AI features</p>
                     </div>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
@@ -59,6 +119,9 @@
                     <button id="clearAll"
                         class="px-3 py-2 rounded-xl bg-rose-600 text-white text-sm font-medium shadow-sm">Clear
                         All</button>
+                    <button id="aiSuggestBtn"
+                        class="px-3 py-2 rounded-xl bg-purple-600 text-white text-sm font-medium shadow-sm">AI
+                        Suggestions</button>
                 </div>
             </header>
 
@@ -93,6 +156,7 @@
                             class="px-3 py-2 text-sm rounded-xl bg-indigo-600 text-white">List</button>
                         <button id="viewKanban" class="px-3 py-2 text-sm rounded-xl">Kanban</button>
                         <button id="viewCalendar" class="px-3 py-2 text-sm rounded-xl">Calendar</button>
+                        <button id="viewAnalytics" class="px-3 py-2 text-sm rounded-xl">Analytics</button>
                     </div>
                 </div>
             </section>
@@ -163,7 +227,8 @@
                     <div class="md:col-span-6 flex items-center justify-between gap-2">
                         <p class="text-xs text-slate-500">Tips: press <kbd
                                 class="px-1 rounded bg-slate-200 dark:bg-slate-700">n</kbd> to focus title, <kbd
-                                class="px-1 rounded bg-slate-200 dark:bg-slate-700">k</kbd> to search.</p>
+                                class="px-1 rounded bg-slate-200 dark:bg-slate-700">k</kbd> to search, <kbd
+                                class="px-1 rounded bg-slate-200 dark:bg-slate-700">f</kbd> for focus mode.</p>
                         <div class="flex items-center gap-2">
                             <button type="reset"
                                 class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700">Reset</button>
@@ -189,6 +254,7 @@
                     <button data-filter="sort:title" class="chip">Title</button>
                 </div>
                 <div id="tagBar" class="flex flex-wrap items-center gap-2"></div>
+                <button id="focusModeBtn" class="chip bg-amber-500 text-white">Focus Mode</button>
                 <style>
                     .chip {
                         padding: .4rem .7rem;
@@ -243,21 +309,21 @@
                             <h2 class="text-sm font-semibold">High (P1)</h2><span id="kP1"
                                 class="text-xs opacity-60">0</span>
                         </div>
-                        <ul class="kanCol space-y-2 min-h-20" data-col="P1"></ul>
+                        <ul class="kanCol space-y-2 kanban-col" data-col="P1"></ul>
                     </div>
                     <div class="rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm p-3" data-col="P2">
                         <div class="flex items-center justify-between px-1 mb-2">
                             <h2 class="text-sm font-semibold">Medium (P2)</h2><span id="kP2"
                                 class="text-xs opacity-60">0</span>
                         </div>
-                        <ul class="kanCol space-y-2 min-h-20" data-col="P2"></ul>
+                        <ul class="kanCol space-y-2 kanban-col" data-col="P2"></ul>
                     </div>
                     <div class="rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm p-3" data-col="P3">
                         <div class="flex items-center justify-between px-1 mb-2">
                             <h2 class="text-sm font-semibold">Low (P3)</h2><span id="kP3"
                                 class="text-xs opacity-60">0</span>
                         </div>
-                        <ul class="kanCol space-y-2 min-h-20" data-col="P3"></ul>
+                        <ul class="kanCol space-y-2 kanban-col" data-col="P3"></ul>
                     </div>
                 </div>
 
@@ -275,6 +341,34 @@
                         </div>
                     </div>
                     <div id="calendarGrid" class="grid grid-cols-7 gap-2"></div>
+                </div>
+
+                <!-- Analytics View -->
+                <div id="analyticsView" class="hidden rounded-2xl bg-white/70 dark:bg-slate-800 shadow-sm p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="text-lg font-semibold">Productivity Analytics</div>
+                        <div class="flex gap-2">
+                            <button id="weekView" class="px-3 py-1 rounded-xl bg-indigo-600 text-white">Week</button>
+                            <button id="monthView"
+                                class="px-3 py-1 rounded-xl bg-slate-200 dark:bg-slate-700">Month</button>
+                            <button id="quarterView"
+                                class="px-3 py-1 rounded-xl bg-slate-200 dark:bg-slate-700">Quarter</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="rounded-xl p-4 bg-slate-100 dark:bg-slate-700">
+                            <h3 class="text-sm font-semibold mb-2">Completion Rate</h3>
+                            <canvas id="completionChart" height="200"></canvas>
+                        </div>
+                        <div class="rounded-xl p-4 bg-slate-100 dark:bg-slate-700">
+                            <h3 class="text-sm font-semibold mb-2">Time Tracking</h3>
+                            <canvas id="timeChart" height="200"></canvas>
+                        </div>
+                        <div class="rounded-xl p-4 bg-slate-100 dark:bg-slate-700 md:col-span-2">
+                            <h3 class="text-sm font-semibold mb-2">Task Distribution</h3>
+                            <canvas id="distributionChart" height="150"></canvas>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -330,6 +424,17 @@
                             class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700"
                             placeholder="Example:\nDesign wireframe\nWrite copy\nShare for review"></textarea>
                     </div>
+                    <div class="md:col-span-2">
+                        <label class="text-xs text-slate-500">Estimated Time (hours)</label>
+                        <input id="e_estimated" type="number" min="0" step="0.25"
+                            class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700" />
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-xs text-slate-500">Dependencies (task IDs)</label>
+                        <input id="e_dependencies"
+                            class="mt-1 w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700"
+                            placeholder="task-id-1, task-id-2" />
+                    </div>
                 </div>
                 <div class="mt-4 flex justify-between">
                     <div class="flex items-center gap-2">
@@ -337,6 +442,8 @@
                             class="px-3 py-2 rounded-xl bg-slate-200 dark:bg-slate-700">Duplicate</button>
                         <button type="button" id="e_archive"
                             class="px-3 py-2 rounded-xl bg-slate-200 dark:bg-slate-700">Archive</button>
+                        <button type="button" id="e_startTimer"
+                            class="px-3 py-2 rounded-xl bg-emerald-600 text-white">Start Timer</button>
                     </div>
                     <div class="flex items-center gap-2">
                         <button value="cancel"
@@ -345,6 +452,21 @@
                     </div>
                 </div>
             </form>
+        </dialog>
+
+        <!-- AI Suggestions Modal -->
+        <dialog id="aiModal" class="rounded-2xl p-0 w-full max-w-2xl">
+            <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl">
+                <h3 class="text-lg font-semibold mb-3">AI Task Suggestions</h3>
+                <div class="mb-4">
+                    <p class="text-sm text-slate-600 dark:text-slate-300">Based on your current tasks and patterns, here
+                        are some suggestions:</p>
+                </div>
+                <div id="aiSuggestions" class="space-y-3 mb-4 max-h-96 overflow-y-auto"></div>
+                <div class="flex justify-end">
+                    <button id="closeAiModal" class="px-3 py-2 rounded-xl bg-indigo-600 text-white">Close</button>
+                </div>
+            </div>
         </dialog>
 
         <!-- Pomodoro Dock -->
@@ -369,14 +491,15 @@
         <script>
             const $ = (sel, el = document) => el.querySelector(sel);
             const $$ = (sel, el = document) => Array.from(el.querySelectorAll(sel));
-            const storeKey = 'taskCurator_v2';
+            const storeKey = 'taskCurator_v3';
 
             let state = {
                 tasks: [],
                 filter: { status: 'all', sort: 'created', tag: null, q: '' },
-                ui: { showDone: true, view: 'list' },
+                ui: { showDone: true, view: 'list', focusMode: false, focusTaskId: null },
                 calendar: { year: new Date().getFullYear(), month: new Date().getMonth() },
-                pomo: { mode: 'focus', remaining: 25 * 60, running: false, taskId: null }
+                pomo: { mode: 'focus', remaining: 25 * 60, running: false, taskId: null },
+                analytics: { period: 'week' }
             };
 
             // Helpers
@@ -434,12 +557,21 @@
                 $('#listView').classList.toggle('hidden', state.ui.view !== 'list');
                 $('#kanbanView').classList.toggle('hidden', state.ui.view !== 'kanban');
                 $('#calendarView').classList.toggle('hidden', state.ui.view !== 'calendar');
+                $('#analyticsView').classList.toggle('hidden', state.ui.view !== 'analytics');
                 $('#viewList').classList.toggle('bg-indigo-600', state.ui.view === 'list');
                 $('#viewList').classList.toggle('text-white', state.ui.view === 'list');
                 $('#viewKanban').classList.toggle('bg-indigo-600', state.ui.view === 'kanban');
                 $('#viewKanban').classList.toggle('text-white', state.ui.view === 'kanban');
                 $('#viewCalendar').classList.toggle('bg-indigo-600', state.ui.view === 'calendar');
                 $('#viewCalendar').classList.toggle('text-white', state.ui.view === 'calendar');
+                $('#viewAnalytics').classList.toggle('bg-indigo-600', state.ui.view === 'analytics');
+                $('#viewAnalytics').classList.toggle('text-white', state.ui.view === 'analytics');
+
+                // Focus mode styling
+                document.body.classList.toggle('focus-mode-active', state.ui.focusMode);
+                $('#focusModeBtn').textContent = state.ui.focusMode ? 'Exit Focus Mode' : 'Focus Mode';
+                $('#focusModeBtn').classList.toggle('bg-amber-500', !state.ui.focusMode);
+                $('#focusModeBtn').classList.toggle('bg-rose-500', state.ui.focusMode);
 
                 // List view
                 if (state.ui.view === 'list') {
@@ -451,6 +583,15 @@
                     $('#collapseDoneTip').textContent = state.ui.showDone ? '' : '(hidden)';
                     $$('#openList li, #doneList li').forEach(wireItem);
                     $('#completeSelected').style.display = $$('#openList input[type="checkbox"]').length ? 'inline-flex' : 'none';
+
+                    // Apply focus mode styling
+                    if (state.ui.focusMode && state.ui.focusTaskId) {
+                        const focusTask = $(`li[data-id="${state.ui.focusTaskId}"]`);
+                        if (focusTask) {
+                            focusTask.classList.add('focus-task');
+                            focusTask.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
                 }
 
                 // Kanban view
@@ -472,6 +613,9 @@
 
                 // Calendar view
                 if (state.ui.view === 'calendar') renderCalendar(applyFilters(open.concat(done)));
+
+                // Analytics view
+                if (state.ui.view === 'analytics') renderAnalytics();
 
                 // Chips
                 $$('#tagBar .chip, section .chip').forEach(btn => {
@@ -498,9 +642,34 @@
                 const dueBadge = t.due ? `<span class="px-2 py-0.5 rounded-lg text-xs ${overdue ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200' : 'bg-slate-200 dark:bg-slate-700'}">${fmtDate(t.due)}${t.time ? (' · ' + t.time) : ''}</span>` : '';
                 const prBadge = `<span class="px-2 py-0.5 rounded-lg text-xs ${priorityClass(t.priority)}">${t.priority}</span>`;
                 const tags = t.tags.map(tag => `<button data-action="filter-tag" data-tag="${tag}" class="text-xs px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-700">#${tag}</button>`).join(' ');
-                const subtasks = (t.subtasks || []).map((s, i) => `<label class="flex items-center gap-2 text-sm"><input type="checkbox" data-action="toggle-sub" data-idx="${i}" ${s.done ? 'checked' : ''}/> <span class="${s.done ? 'line-through opacity-60' : ''}">${escapeHTML(s.text)}</span></label>`).join('');
+
+                // Calculate subtask progress
+                const subtasks = t.subtasks || [];
+                const completedSubtasks = subtasks.filter(s => s.done).length;
+                const progressPercent = subtasks.length > 0 ? Math.round((completedSubtasks / subtasks.length) * 100) : 0;
+                const progressBar = subtasks.length > 0 ? `
+                <div class="mt-2 flex items-center gap-2 text-xs">
+                    <div class="flex-1 h-2 bg-slate-300 dark:bg-slate-600 rounded-full overflow-hidden">
+                        <div class="h-full bg-emerald-500 progress-bar" style="width: ${progressPercent}%"></div>
+                    </div>
+                    <span>${completedSubtasks}/${subtasks.length}</span>
+                </div>
+            ` : '';
+
+                const subtaskList = subtasks.map((s, i) => `<label class="flex items-center gap-2 text-sm"><input type="checkbox" data-action="toggle-sub" data-idx="${i}" ${s.done ? 'checked' : ''}/> <span class="${s.done ? 'line-through opacity-60' : ''}">${escapeHTML(s.text)}</span></label>`).join('');
+
+                // Time tracking info
+                const timeInfo = t.tracked ? `<div class="text-xs mt-1 opacity-60">Time spent: ${secsToHms(t.tracked)}${t.estimated ? ` / ${t.estimated}h` : ''}</div>` : '';
+
+                // Dependency info
+                const depsInfo = t.dependencies && t.dependencies.length > 0 ?
+                    `<div class="text-xs mt-1 opacity-60">Depends on: ${t.dependencies.map(d => {
+                        const depTask = findTask(d);
+                        return depTask ? escapeHTML(depTask.title.substring(0, 15) + (depTask.title.length > 15 ? '...' : '')) : d.substring(0, 8);
+                    }).join(', ')}</div>` : '';
+
                 return `
-        <li data-id="${t.id}" draggable="true" class="group rounded-xl p-3 bg-slate-100 dark:bg-slate-700/60 hover:bg-slate-100/80 transition">
+        <li data-id="${t.id}" draggable="true" class="group rounded-xl p-3 bg-slate-100 dark:bg-slate-700/60 hover:bg-slate-100/80 transition task-card">
           <div class="flex items-start gap-3">
             <input type="checkbox" ${t.done ? 'checked' : ''} class="mt-1 size-4" data-action="toggle" />
             <div class="flex-1 min-w-0">
@@ -511,9 +680,12 @@
                 ${t.archived ? '<span class="text-xs px-2 py-0.5 rounded-lg bg-slate-300 dark:bg-slate-600">Archived</span>' : ''}
               </div>
               ${t.notes ? `<p class="text-sm text-slate-600 dark:text-slate-300 mt-1 whitespace-pre-wrap">${escapeHTML(t.notes)}</p>` : ''}
-              ${(t.subtasks && t.subtasks.length) ? `<div class="mt-2 grid gap-1">${subtasks}</div>` : ''}
+              ${progressBar}
+              ${(subtasks.length) ? `<div class="mt-2 grid gap-1">${subtaskList}</div>` : ''}
               <div class="mt-2 flex flex-wrap gap-2">${tags}</div>
-              <div class="mt-2 text-xs opacity-60">Added ${new Date(t.createdAt).toLocaleString()} · ${t.tracked ? secsToHms(t.tracked) : '0:00'}</div>
+              ${timeInfo}
+              ${depsInfo}
+              <div class="mt-2 text-xs opacity-60">Added ${new Date(t.createdAt).toLocaleString()}</div>
             </div>
             <div class="flex flex-col gap-2 items-end">
               <button data-action="edit" class="text-xs px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-600">Edit</button>
@@ -556,16 +728,52 @@
             }
 
             // CRUD
-            function addTask({ title, notes, due, time, priority, tags, recurring, every, notify }) {
+            function addTask({ title, notes, due, time, priority, tags, recurring, every, notify, estimated, dependencies }) {
                 const order = (state.tasks.filter(t => !t.done && !t.archived).reduce((m, t) => Math.max(m, t.order || 0), -1) + 1);
-                const t = { id: uid(), title, notes, due: due || '', time: time || '', priority, tags, createdAt: Date.now(), done: false, order, archived: false, subtasks: [], recurring, every: Number(every) || 1, notify: !!notify, tracked: 0 };
-                state.tasks.push(t); scheduleNotification(t); save(); render(); toast('Task added');
+                const t = {
+                    id: uid(),
+                    title,
+                    notes,
+                    due: due || '',
+                    time: time || '',
+                    priority,
+                    tags,
+                    createdAt: Date.now(),
+                    done: false,
+                    order,
+                    archived: false,
+                    subtasks: [],
+                    recurring,
+                    every: Number(every) || 1,
+                    notify: !!notify,
+                    tracked: 0,
+                    estimated: estimated || 0,
+                    dependencies: dependencies || []
+                };
+                state.tasks.push(t);
+                scheduleNotification(t);
+                save();
+
+                // Add animation class for new task
+                setTimeout(() => {
+                    const newTaskEl = $(`li[data-id="${t.id}"]`);
+                    if (newTaskEl) {
+                        newTaskEl.classList.add('task-fade-in');
+                    }
+                }, 10);
+
+                render();
+                toast('Task added');
             }
             const findTask = (id) => state.tasks.find(x => x.id === id);
             function delTask(id) { state.tasks = state.tasks.filter(t => t.id !== id); save(); render(); toast('Deleted'); }
             function duplicateTask(id) { const t = findTask(id); if (!t) return; const copy = { ...t, id: uid(), createdAt: Date.now(), done: false, archived: false }; state.tasks.push(copy); save(); render(); toast('Duplicated'); }
             function toggleDone(id, val) {
-                const t = findTask(id); if (!t) return; t.done = val; if (!val) { t.order = (state.tasks.filter(x => !x.done && !x.archived).reduce((m, x) => Math.max(m, x.order || 0), -1) + 1); } else if (val) { // handle recurring
+                const t = findTask(id); if (!t) return; t.done = val;
+                if (!val) {
+                    t.order = (state.tasks.filter(x => !x.done && !x.archived).reduce((m, x) => Math.max(m, x.order || 0), -1) + 1);
+                } else if (val) {
+                    // handle recurring
                     if (t.recurring && t.recurring !== 'none') { advanceRecurring(t); }
                 }
                 save(); render();
@@ -576,13 +784,44 @@
             function openEditor(id) {
                 const t = findTask(id); if (!t) return;
                 const dlg = $('#editModal');
-                $('#e_title').value = t.title; $('#e_due').value = t.due; $('#e_time').value = t.time || ''; $('#e_priority').value = t.priority; $('#e_tags').value = t.tags.join(', '); $('#e_notes').value = t.notes || ''; $('#e_subtasks').value = (t.subtasks || []).map(s => s.text).join('\n');
+                $('#e_title').value = t.title;
+                $('#e_due').value = t.due;
+                $('#e_time').value = t.time || '';
+                $('#e_priority').value = t.priority;
+                $('#e_tags').value = t.tags.join(', ');
+                $('#e_notes').value = t.notes || '';
+                $('#e_subtasks').value = (t.subtasks || []).map(s => s.text).join('\n');
+                $('#e_estimated').value = t.estimated || '';
+                $('#e_dependencies').value = t.dependencies ? t.dependencies.join(', ') : '';
+
                 dlg.returnValue = 'cancel';
                 dlg.showModal();
                 $('#e_duplicate').onclick = () => { duplicateTask(id); };
                 $('#e_archive').onclick = () => { toggleArchive(id); };
+                $('#e_startTimer').onclick = () => {
+                    state.pomo.taskId = id;
+                    startPomo();
+                    dlg.close();
+                };
                 $('#editForm').onsubmit = (e) => { e.preventDefault(); };
-                dlg.onclose = () => { if (dlg.returnValue === 'save') { Object.assign(t, { title: $('#e_title').value, notes: $('#e_notes').value, due: $('#e_due').value, time: $('#e_time').value, priority: $('#e_priority').value, tags: parseTags($('#e_tags').value), subtasks: ($('#e_subtasks').value.split('\n').filter(Boolean).map(s => ({ text: s, done: false }))) }); save(); render(); toast('Updated'); } };
+                dlg.onclose = () => {
+                    if (dlg.returnValue === 'save') {
+                        Object.assign(t, {
+                            title: $('#e_title').value,
+                            notes: $('#e_notes').value,
+                            due: $('#e_due').value,
+                            time: $('#e_time').value,
+                            priority: $('#e_priority').value,
+                            tags: parseTags($('#e_tags').value),
+                            subtasks: ($('#e_subtasks').value.split('\n').filter(Boolean).map(s => ({ text: s, done: false }))),
+                            estimated: parseFloat($('#e_estimated').value) || 0,
+                            dependencies: ($('#e_dependencies').value.split(',').map(s => s.trim()).filter(Boolean))
+                        });
+                        save();
+                        render();
+                        toast('Updated');
+                    }
+                };
             }
 
             function completeSelected() { $$('#openList input[type="checkbox"]').forEach(cb => { if (cb.checked) { const id = cb.closest('li').dataset.id; toggleDone(id, true); } }); }
@@ -621,7 +860,19 @@
             $('#taskForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const title = $('#title').value.trim(); if (!title) return;
-                addTask({ title, notes: $('#notes').value.trim(), due: $('#due').value, time: $('#time').value, priority: $('#priority').value, tags: parseTags($('#tags').value), recurring: $('#recurring').value, every: $('#recurringEvery').value, notify: $('#notifyToggle').checked });
+                addTask({
+                    title,
+                    notes: $('#notes').value.trim(),
+                    due: $('#due').value,
+                    time: $('#time').value,
+                    priority: $('#priority').value,
+                    tags: parseTags($('#tags').value),
+                    recurring: $('#recurring').value,
+                    every: $('#recurringEvery').value,
+                    notify: $('#notifyToggle').checked,
+                    estimated: 0,
+                    dependencies: []
+                });
                 e.target.reset(); $('#title').focus();
             });
             $('#quickAdd').addEventListener('click', () => quickAdd());
@@ -633,7 +884,7 @@
                 const prMatch = s.match(/\bp([123])\b/i); const priority = prMatch ? ('P' + prMatch[1]) : 'P3';
                 const notify = /!remind/.test(s);
                 const tags = (s.match(/#(\w+)/g) || []).map(x => x.slice(1));
-                addTask({ title, notes: '', due, time: '', priority, tags, recurring: 'none', every: 1, notify });
+                addTask({ title, notes: '', due, time: '', priority, tags, recurring: 'none', every: 1, notify, estimated: 0, dependencies: [] });
             }
 
             // Filters & search
@@ -643,10 +894,145 @@
             $('#completeSelected').addEventListener('click', completeSelected);
             $('#archiveSelected').addEventListener('click', () => { $$('#openList input[type="checkbox"]').forEach(cb => { if (cb.checked) { const id = cb.closest('li').dataset.id; toggleArchive(id); } }); });
 
+            // Focus mode
+            $('#focusModeBtn').addEventListener('click', () => {
+                state.ui.focusMode = !state.ui.focusMode;
+                if (state.ui.focusMode) {
+                    // In focus mode, find the highest priority task that's not done
+                    const openTasks = state.tasks.filter(t => !t.done && !t.archived);
+                    if (openTasks.length > 0) {
+                        // Sort by priority then by due date
+                        const sorted = openTasks.sort((a, b) => {
+                            const priorityCompare = comparePriority(a.priority, b.priority);
+                            if (priorityCompare !== 0) return priorityCompare;
+                            return (a.due || '9999-99-99').localeCompare(b.due || '9999-99-99');
+                        });
+                        state.ui.focusTaskId = sorted[0].id;
+                    }
+                } else {
+                    state.ui.focusTaskId = null;
+                }
+                save();
+                render();
+            });
+
             // View switchers
             $('#viewList').onclick = () => { state.ui.view = 'list'; save(); render(); };
             $('#viewKanban').onclick = () => { state.ui.view = 'kanban'; save(); render(); };
             $('#viewCalendar').onclick = () => { state.ui.view = 'calendar'; save(); render(); };
+            $('#viewAnalytics').onclick = () => { state.ui.view = 'analytics'; save(); render(); };
+
+            // Analytics period switchers
+            $('#weekView').onclick = () => { state.analytics.period = 'week'; save(); render(); };
+            $('#monthView').onclick = () => { state.analytics.period = 'month'; save(); render(); };
+            $('#quarterView').onclick = () => { state.analytics.period = 'quarter'; save(); render(); };
+
+            // Analytics rendering
+            function renderAnalytics() {
+                // Completion rate chart
+                const completionCtx = $('#completionChart').getContext('2d');
+                const last7Days = Array.from({ length: 7 }, (_, i) => {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    return d.toISOString().slice(0, 10);
+                }).reverse();
+
+                const completionData = last7Days.map(date => {
+                    const tasksOnDate = state.tasks.filter(t => t.due === date);
+                    const completed = tasksOnDate.filter(t => t.done).length;
+                    return tasksOnDate.length > 0 ? (completed / tasksOnDate.length) * 100 : 0;
+                });
+
+                if (window.completionChart) window.completionChart.destroy();
+                window.completionChart = new Chart(completionCtx, {
+                    type: 'line',
+                    data: {
+                        labels: last7Days.map(d => new Date(d).toLocaleDateString(undefined, { weekday: 'short' })),
+                        datasets: [{
+                            label: 'Completion Rate %',
+                            data: completionData,
+                            borderColor: 'rgb(79, 70, 229)',
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+
+                // Time tracking chart
+                const timeCtx = $('#timeChart').getContext('2d');
+                const timeData = [5, 7, 8, 6, 9, 10, 4]; // Sample data - in a real app, you'd track this
+
+                if (window.timeChart) window.timeChart.destroy();
+                window.timeChart = new Chart(timeCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: last7Days.map(d => new Date(d).toLocaleDateString(undefined, { weekday: 'short' })),
+                        datasets: [{
+                            label: 'Hours Tracked',
+                            data: timeData,
+                            backgroundColor: 'rgba(16, 185, 129, 0.5)',
+                            borderColor: 'rgb(16, 185, 129)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Task distribution chart
+                const distCtx = $('#distributionChart').getContext('2d');
+                const priorityCounts = {
+                    P1: state.tasks.filter(t => t.priority === 'P1').length,
+                    P2: state.tasks.filter(t => t.priority === 'P2').length,
+                    P3: state.tasks.filter(t => t.priority === 'P3').length
+                };
+
+                if (window.distChart) window.distChart.destroy();
+                window.distChart = new Chart(distCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['High Priority', 'Medium Priority', 'Low Priority'],
+                        datasets: [{
+                            data: [priorityCounts.P1, priorityCounts.P2, priorityCounts.P3],
+                            backgroundColor: [
+                                'rgba(239, 68, 68, 0.7)',
+                                'rgba(245, 158, 11, 0.7)',
+                                'rgba(16, 185, 129, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgb(239, 68, 68)',
+                                'rgb(245, 158, 11)',
+                                'rgb(16, 185, 129)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
 
             // Import/Export/Clear
             $('#exportBtn').addEventListener('click', () => {
@@ -658,12 +1044,114 @@
                 reader.onload = () => { try { const data = JSON.parse(reader.result); if (Array.isArray(data.tasks)) state.tasks = data.tasks; if (data.filter) state.filter = data.filter; if (data.ui) state.ui = data.ui; if (data.calendar) state.calendar = data.calendar; if (data.pomo) state.pomo = data.pomo; save(); render(); toast('Imported'); } catch (err) { alert('Invalid JSON'); } };
                 reader.readAsText(file); e.target.value = '';
             });
-            $('#clearAll').addEventListener('click', () => { if (confirm('This will clear ALL tasks. Continue?')) { state = { tasks: [], filter: { status: 'all', sort: 'created', tag: null, q: '' }, ui: { showDone: true, view: 'list' }, calendar: { year: new Date().getFullYear(), month: new Date().getMonth() }, pomo: { mode: 'focus', remaining: 25 * 60, running: false, taskId: null } }; save(); render(); } });
+            $('#clearAll').addEventListener('click', () => { if (confirm('This will clear ALL tasks. Continue?')) { state = { tasks: [], filter: { status: 'all', sort: 'created', tag: null, q: '' }, ui: { showDone: true, view: 'list', focusMode: false, focusTaskId: null }, calendar: { year: new Date().getFullYear(), month: new Date().getMonth() }, pomo: { mode: 'focus', remaining: 25 * 60, running: false, taskId: null }, analytics: { period: 'week' } }; save(); render(); } });
+
+            // AI Suggestions
+            $('#aiSuggestBtn').addEventListener('click', showAiSuggestions);
+            $('#closeAiModal').addEventListener('click', () => $('#aiModal').close());
+
+            function showAiSuggestions() {
+                const modal = $('#aiModal');
+                const suggestionsContainer = $('#aiSuggestions');
+
+                // Generate mock AI suggestions based on current tasks
+                const openTasks = state.tasks.filter(t => !t.done && !t.archived);
+                const highPriorityTasks = openTasks.filter(t => t.priority === 'P1');
+                const overdueTasks = openTasks.filter(t => t.due && t.due < todayISO());
+
+                let suggestions = [];
+
+                if (overdueTasks.length > 0) {
+                    suggestions.push({
+                        type: 'warning',
+                        title: 'Overdue Tasks',
+                        message: `You have ${overdueTasks.length} overdue task${overdueTasks.length > 1 ? 's' : ''}. Consider addressing these first.`,
+                        action: () => {
+                            state.filter.status = 'open';
+                            render();
+                            modal.close();
+                        }
+                    });
+                }
+
+                if (highPriorityTasks.length > 0) {
+                    suggestions.push({
+                        type: 'priority',
+                        title: 'High Priority Tasks',
+                        message: `You have ${highPriorityTasks.length} high priority task${highPriorityTasks.length > 1 ? 's' : ''}. Focus on these important items.`,
+                        action: () => {
+                            state.ui.view = 'kanban';
+                            render();
+                            modal.close();
+                        }
+                    });
+                }
+
+                // Suggest breaking down large tasks
+                const largeTasks = openTasks.filter(t => t.estimated > 4);
+                if (largeTasks.length > 0) {
+                    suggestions.push({
+                        type: 'decompose',
+                        title: 'Large Tasks',
+                        message: `Consider breaking down "${largeTasks[0].title.substring(0, 20)}..." into smaller subtasks for better manageability.`,
+                        action: () => {
+                            openEditor(largeTasks[0].id);
+                            modal.close();
+                        }
+                    });
+                }
+
+                // Time allocation suggestion
+                const totalEstimated = openTasks.reduce((sum, t) => sum + (t.estimated || 0), 0);
+                if (totalEstimated > 20) {
+                    suggestions.push({
+                        type: 'time',
+                        title: 'Time Management',
+                        message: `Your open tasks total approximately ${totalEstimated} hours. Consider prioritizing or delegating some tasks.`,
+                        action: () => {
+                            state.ui.view = 'analytics';
+                            render();
+                            modal.close();
+                        }
+                    });
+                }
+
+                // Default suggestion if none others apply
+                if (suggestions.length === 0) {
+                    suggestions.push({
+                        type: 'general',
+                        title: 'Productivity Tip',
+                        message: 'Try using the Pomodoro technique with the built-in timer to maintain focus on your tasks.',
+                        action: () => {
+                            modal.close();
+                        }
+                    });
+                }
+
+                // Render suggestions
+                suggestionsContainer.innerHTML = suggestions.map(s => `
+                <div class="p-3 rounded-xl bg-slate-100 dark:bg-slate-700">
+                    <div class="font-semibold mb-1">${s.title}</div>
+                    <p class="text-sm mb-2">${s.message}</p>
+                    <button class="text-xs px-2 py-1 rounded-lg bg-indigo-600 text-white" data-action="apply-suggestion">Apply Suggestion</button>
+                </div>
+            `).join('');
+
+                // Wire up suggestion buttons
+                $$('#aiSuggestions [data-action="apply-suggestion"]').forEach((btn, i) => {
+                    btn.addEventListener('click', suggestions[i].action);
+                });
+
+                modal.showModal();
+            }
 
             // Shortcuts
             window.addEventListener('keydown', (e) => {
                 if (e.key === 'k' && document.activeElement !== $('#search')) { e.preventDefault(); $('#search').focus(); }
                 if (e.key.toLowerCase() === 'n' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) { $('#title').focus(); }
+                if (e.key.toLowerCase() === 'f' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+                    $('#focusModeBtn').click();
+                }
             });
 
             // Calendar
@@ -688,7 +1176,7 @@
                     listEl.innerHTML = dayTasks.map(t => `<div class="text-xs px-2 py-1 rounded-lg ${priorityClass(t.priority)} truncate">${escapeHTML(t.title)}${t.time ? (' · ' + t.time) : ''}</div>`).join('');
                     cell.appendChild(listEl);
                     cell.addEventListener('dblclick', () => { // quick create for this date
-                        const title = prompt('New task title for ' + iso); if (!title) return; addTask({ title, notes: '', due: iso, time: '', priority: 'P3', tags: [], recurring: 'none', every: 1, notify: false });
+                        const title = prompt('New task title for ' + iso); if (!title) return; addTask({ title, notes: '', due: iso, time: '', priority: 'P3', tags: [], recurring: 'none', every: 1, notify: false, estimated: 0, dependencies: [] });
                     });
                     grid.appendChild(cell);
                 }
@@ -719,9 +1207,11 @@
             // Init
             load();
             if (!state.tasks.length) {
-                addTask({ title: 'Welcome to Task Curator Pro', notes: 'List · Kanban · Calendar · Pomodoro · Recurring · Reminders', due: todayISO(), time: '', priority: 'P2', tags: ['welcome', 'demo'], recurring: 'none', every: 1, notify: false });
-                addTask({ title: 'Open the Kanban view', notes: 'Drag between columns to change priority', due: '', time: '', priority: 'P3', tags: ['tips'], recurring: 'none', every: 1, notify: false });
-                addTask({ title: 'Schedule a reminder', notes: 'Turn on “Remind me at due time” when adding', due: '', time: '', priority: 'P1', tags: ['tips'], recurring: 'none', every: 1, notify: false });
+                addTask({ title: 'Welcome to Task Curator Pro', notes: 'List · Kanban · Calendar · Analytics · Pomodoro · Recurring · Reminders', due: todayISO(), time: '', priority: 'P2', tags: ['welcome', 'demo'], recurring: 'none', every: 1, notify: false, estimated: 0.5, dependencies: [] });
+                addTask({ title: 'Open the Kanban view', notes: 'Drag between columns to change priority', due: '', time: '', priority: 'P3', tags: ['tips'], recurring: 'none', every: 1, notify: false, estimated: 0.25, dependencies: [] });
+                addTask({ title: 'Schedule a reminder', notes: 'Turn on "Remind me at due time" when adding', due: '', time: '', priority: 'P1', tags: ['tips'], recurring: 'none', every: 1, notify: false, estimated: 0.25, dependencies: [] });
+                addTask({ title: 'Try Focus Mode', notes: 'Click the Focus Mode button to concentrate on one task', due: '', time: '', priority: 'P2', tags: ['tips'], recurring: 'none', every: 1, notify: false, estimated: 1, dependencies: [] });
+                addTask({ title: 'Check Analytics', notes: 'View your productivity trends in the Analytics tab', due: '', time: '', priority: 'P3', tags: ['tips'], recurring: 'none', every: 1, notify: false, estimated: 0.5, dependencies: [] });
             } else { render(); }
 
             // After first render, ask notification permission opportunistically
